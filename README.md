@@ -38,7 +38,7 @@ Templates describe how to generate terrain — combining noise, shapes, images, 
 	
 5. **Run the generator**
 	
-	Open a console in your installation folder and run 'python ws-generator.py' for usage instructions
+	Open a console in your installation folder and run 'python ws-gen.py' for usage instructions
 
 ## Feedback
 
