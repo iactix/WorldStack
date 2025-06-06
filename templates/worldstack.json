@@ -1,0 +1,53 @@
+{
+    "width": 128,
+    "height": 128,
+    "modules": [
+        {
+            "type": "image_loader",
+            "out": "logo",
+            "file": "worldstack.png",
+            "mode": "fit",
+            "background": 0,
+            "_editor_px": 187.39396264922823,
+            "_editor_py": 85.00344496150103
+        },
+        {
+            "type": "simplex_noise",
+            "out": "noise",
+            "scale": 20,
+            "max": 1,
+            "_editor_px": 188.79072801190142,
+            "_editor_py": 449.5163882770222
+        },
+        {
+            "type": "combiner",
+            "in1": "logo",
+            "in2": "noise",
+            "out": "comb1",
+            "mode": "multiply",
+            "limit_low": 0,
+            "limit_high": 255,
+            "clip": true,
+            "_editor_px": 498.0945068992151,
+            "_editor_py": 218.5344180670511
+        },
+        {
+            "type": "gradient_mapper",
+            "in": "comb1",
+            "out": "final",
+            "gradient": [
+                0,
+                0,
+                1,
+                1,
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "_editor_px": 786.9494879879072,
+            "_editor_py": 259.19272936216436
+        }
+    ]
+}
