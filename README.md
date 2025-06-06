@@ -1,4 +1,4 @@
-# WorldStack
+![WorldStack Logo](images/worldstack.png)
 **A node-based heightmap generator**
 
 WorldStack is a two-part system:
