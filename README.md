@@ -1,4 +1,7 @@
-![WorldStack Logo](images/worldstack.png)
+<p align="center">
+  <img src="images/worldstack.png" alt="Logo">
+</p>
+
 **A node-based heightmap generator**
 
 WorldStack is a two-part system:
