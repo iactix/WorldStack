@@ -4,7 +4,7 @@
 
 ## What is this?
 
-**A node-based heightmap generator**
+**A node-based heightmap generator.**
 
 WorldStack is a two-part system:
 
@@ -16,7 +16,7 @@ Templates describe how to generate terrain — combining noise, shapes, images, 
 ## Installation
 
 1. **Install Python**  
-   Please do a websearch how to do this, it is just a matter of downloading and installing. Make sure to check **"Add Python to PATH"** during installation.
+   Please do a web search to find the latest python installer, it is just a matter of downloading and installing. Make sure to check **"Add Python to PATH"** during installation.
 
 2. **Download or clone WorldStack**  
 
