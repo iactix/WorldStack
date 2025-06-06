@@ -1,7 +1,4 @@
 # WorldStack
-
-## What is this?
-
 **A node-based heightmap generator**
 
 WorldStack is a two-part system:
@@ -10,10 +7,6 @@ WorldStack is a two-part system:
 - **WorldStack Generator** – uses those templates to create actual heightmaps via command line
 
 Templates describe how to generate terrain — combining noise, shapes, images, and filters to define a way of generating specific worlds. Games like OpenTTD understand the resulting 'heightmaps' and can generate actual game maps based on them.
-
----
-
-This is an early release aimed at advanced users, but setup is simple:
 
 ## Installation
 
@@ -37,8 +30,6 @@ This is an early release aimed at advanced users, but setup is simple:
 5. **Run the generator**
 	
 	Open a console in your installation folder and run 'python ws-generator.py' for usage instructions
-	
----
 
 ## Feedback
 
