@@ -30,7 +30,7 @@ Templates describe how to generate terrain — combining noise, shapes, images, 
 
 4. **Run the editor**
 
-	Run editor.cmd, this just executes 'python ws-edit.py'. Once the editor opens just press "Help" and you will be guided from there.
+	Run editor.cmd, this executes 'python ws-edit.py'. Once the editor opens just press "Help" and you will be guided from there.
 	
 5. **Run the generator**
 	
