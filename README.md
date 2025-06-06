@@ -3,7 +3,7 @@
 
 WorldStack is a two-part system:
 
-- **WorldStack Editor** – lets you design generator templates using a visual node interface
+- **WorldStack Editor** – lets you design generator templates using a graphical node editor
 - **WorldStack Generator** – uses those templates to create actual heightmaps via command line
 
 Templates describe how to generate terrain — combining noise, shapes, images, and filters to define a way of generating specific worlds. Games like OpenTTD understand the resulting 'heightmaps' and can generate actual game maps based on them.
