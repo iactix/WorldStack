@@ -1,5 +1,6 @@
 Pillow
 numpy
 scipy
-noise
 scikit-image
+perlin-noise
+opensimplex
