@@ -13,6 +13,10 @@ WorldStack is a two-part system:
 
 Templates describe how to generate terrain — combining noise, shapes, images, and filters to define a way of generating specific worlds. Games like OpenTTD understand the resulting 'heightmaps' and can generate actual game maps based on them.
 
+<p align="center">
+  <img src="github_1.png" alt="Screenshot">
+</p>
+
 ## Quickstart
 
 1. **Install Python**  
