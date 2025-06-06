@@ -2,5 +2,4 @@ Pillow
 numpy
 scipy
 scikit-image
-perlin-noise
-opensimplex
+pyfastnoiselite

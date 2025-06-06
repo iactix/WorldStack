@@ -10,51 +10,62 @@ from scipy.interpolate import CubicSpline
 from skimage.draw import polygon, disk
 from PIL import Image
 import os
-from perlin_noise import PerlinNoise
-from opensimplex import OpenSimplex
+from pyfastnoiselite.pyfastnoiselite import FastNoiseLite, NoiseType
 
 class PerlinNoiseGenerator(GeneratorModule):
     def init(self):
         self.set_type("perlin_noise", "generator")
         self.create_setting("out", "", "Image output name", "output")
-        self.create_setting("scale", 30, "Scales the noise pattern, higher values result in wider waves.")
+        self.create_setting("scale", 30, "Scales the noise pattern; higher values result in wider waves.")
         self.create_setting("max", 255, "Maximum brightness")
-        return "Generates a random Perlin noise pattern. If you don't know better, you probably want to use simplex noise instead."
+        return "Generates a random Perlin noise pattern."
 
     def apply(self, map_width, map_height, settings, inputs, rng):
-        scale = settings["scale"]
+        scale = 1.0 / settings["scale"]
         half_noise_height = settings["max"] / 2
-        map_out = np.full((map_height, map_width), 0.0, dtype=np.float32)
+        map_out = np.zeros((map_height, map_width), dtype=np.float32)
 
-        noise = PerlinNoise(octaves=1, seed=rng.randint(0, 1000000))
+        noise = FastNoiseLite(seed=rng.randint(0, 1000000))
+        noise.noise_type = NoiseType.NoiseType_Perlin
+        noise.frequency = scale  # Set frequency directly
+
+        rndx = rng.randint(0, 1000000) / 100.0
+        rndy = rng.randint(0, 1000000) / 100.0
 
         for i in range(map_height):
             for j in range(map_width):
-                val = noise([i / scale, j / scale])  # Output in [-1, 1]
+                val = noise.get_noise(i + rndx, j + rndy)
                 map_out[i][j] = (val + 1) * half_noise_height
+
         return {"out": map_out}
 
 class SimplexNoiseGenerator(GeneratorModule):
     def init(self):
         self.set_type("simplex_noise", "generator")
         self.create_setting("out", "", "Image output name", "output")
-        self.create_setting("scale", 30, "Scales the noise pattern, higher values result in wider waves.")
+        self.create_setting("scale", 30, "Scales the noise pattern; higher values result in wider waves.")
         self.create_setting("max", 255, "Maximum brightness")
-        return "Generates a random Simplex noise pattern, the basis of most map generators."
+        return "Generates a random Simplex noise pattern."
 
     def apply(self, map_width, map_height, settings, inputs, rng):
-        scale = settings["scale"] * 2  # Your original scaling math
+        scale = 1.0 / (settings["scale"] * 2)
         half_noise_height = settings["max"] / 2
-        map_out = np.full((map_height, map_width), 0.0, dtype=np.float32)
+        map_out = np.zeros((map_height, map_width), dtype=np.float32)
 
-        noise = OpenSimplex(seed=rng.randint(0, 1000000))
+        noise = FastNoiseLite(seed=rng.randint(0, 1000000))
+        noise.noise_type = NoiseType.NoiseType_OpenSimplex2
+        noise.frequency = scale  # Set frequency directly
+
+        rndx = rng.randint(0, 1000000) / 100.0
+        rndy = rng.randint(0, 1000000) / 100.0
 
         for i in range(map_height):
             for j in range(map_width):
-                val = noise.noise2d(i / scale, j / scale)  # Output in [-1, 1]
+                val = noise.get_noise(i + rndx, j + rndy)
                 map_out[i][j] = (val + 1) * half_noise_height
-        return {"out": map_out}
 
+        return {"out": map_out}
+    
 class Circle(GeneratorModule):
     def init(self):
         self.set_type("circle", "generator")
