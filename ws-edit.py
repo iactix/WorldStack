@@ -731,7 +731,7 @@ class Node:
         brightness_label.pack(pady=NODE_MARGIN)
 
         update_label = tk.Label(graphics_frame,
-                                text="[Click image to open]\n[Click on node to refresh image]",
+                                text="[Click image to open]\n[Click on node to update image to latest generation]",
                                 font=("Arial", 10))
         update_label.pack(pady=(0, NODE_MARGIN))
 
