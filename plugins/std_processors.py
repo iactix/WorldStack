@@ -1,5 +1,6 @@
 from plugin import GeneratorModule
 import numpy as np
+from scipy.ndimage import affine_transform
 
 class Combiner(GeneratorModule):
     def init(self):
@@ -47,3 +48,63 @@ class Combiner(GeneratorModule):
 
         return {"out": map_out}
 
+class Transform(GeneratorModule):
+    def init(self):
+        self.set_type("transform", "processor")
+        self.create_setting("in", "", "Image input name", "input")
+        self.create_setting("out", "", "Image output name", "output")
+
+        self.create_setting("move_x", 0.0, "Move image right/left (pixels, right = positive)")
+        self.create_setting("move_y", 0.0, "Move image down/up (pixels, down = positive)")
+        self.create_setting("scale_x", 1.0, "Scale image horizontally (1 = unchanged)")
+        self.create_setting("scale_y", 1.0, "Scale image vertically (1 = unchanged)")
+        self.create_setting("rotate", 0.0, "Rotate image around center (degrees counter-clockwise)")
+        self.create_setting("background", 0.0, "Background brightness for areas outside the image")
+
+        return "Scales, rotates, and moves the image. Order of operations: scale → rotate → move."
+
+    def apply(self, map_width, map_height, settings, inputs, rng):
+        map_src = inputs.get("in", np.full((map_height, map_width), 0.0, dtype=np.float32))
+
+        move_x = settings["move_x"]
+        move_y = settings["move_y"]
+        scale_x = settings["scale_x"]
+        scale_y = settings["scale_y"]
+        angle_deg = settings["rotate"]
+        background = settings["background"]
+
+        if (
+            move_x == 0.0 and move_y == 0.0 and
+            scale_x == 1.0 and scale_y == 1.0 and
+            angle_deg == 0.0
+        ):
+            return {"out": map_src.copy()}
+
+        angle_rad = -np.deg2rad(angle_deg)  # negative for counter-clockwise rotation
+        cos_a = np.cos(angle_rad)
+        sin_a = np.sin(angle_rad)
+
+        matrix = np.array([
+            [cos_a / scale_y, -sin_a / scale_x],
+            [sin_a / scale_y,  cos_a / scale_x],
+        ])
+
+        center_y = map_height / 2.0
+        center_x = map_width / 2.0
+
+        offset = np.array([
+            center_y - (matrix[0, 0] * center_y + matrix[0, 1] * center_x) - move_y,
+            center_x - (matrix[1, 0] * center_y + matrix[1, 1] * center_x) - move_x,
+        ])
+
+        map_out = affine_transform(
+            map_src,
+            matrix=matrix,
+            offset=offset,
+            output_shape=(map_height, map_width),
+            order=1,
+            mode='constant',
+            cval=background
+        )
+
+        return {"out": map_out}
