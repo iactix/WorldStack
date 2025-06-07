@@ -92,7 +92,7 @@ def create_execution_order(modules, configs):
     return jobs
 
 
-def save_image(destination, data, normalize, norm_min = True):
+def save_image(destination, data, normalize, norm_min = True, sixteenbit = False):
     if normalize:
         if norm_min:
             min = data.min()
@@ -104,13 +104,21 @@ def save_image(destination, data, normalize, norm_min = True):
         if min == max:
             min -= 1
             min += 1
-        img = Image.fromarray(np.clip((data - min) * (255.0 / (max - min)), 0, 255).astype(np.uint8), mode="L")
+        
+        if sixteenbit:
+            scaled = (data - min) * (65535.0 / (max - min))
+            img = Image.fromarray(np.clip(scaled, 0, 65535).astype(np.uint16), mode="I;16")
+        else:
+            img = Image.fromarray(np.clip((data - min) * (255.0 / (max - min)), 0, 255).astype(np.uint8), mode="L")
     else:
-        img = Image.fromarray(np.clip(data, 0, 255).astype(np.uint8), mode="L")
+        
+        if sixteenbit:
+            scaled = data * 257  # Assumes input is 0–255, scale to 16-bit
+            img = Image.fromarray(np.clip(scaled, 0, 65535).astype(np.uint16), mode="I;16")
+        else:
+            img = Image.fromarray(np.clip(data, 0, 255).astype(np.uint8), mode="L")
     
-    #processed = np.stack([red, green, blue], axis=-1)  # RGB format
-    #img = Image.fromarray(processed, mode="RGB")
-
+    
     img.save(destination)
 
 
@@ -276,13 +284,13 @@ def main():
 
     print("------------------------------------------------------------------o Finalization")
     if output_file != "":
-        # Normalize and export as 8-bit grayscale
         if "final" not in outputs:
             print("No module was named 'final' -> No result produced")
             return
         
         highest_peak = outputs["final"].max()
-        save_image(output_file, outputs["final"], True, False)
+        # Normalize and export as 8-bit or 16-bit grayscale
+        save_image(output_file, outputs["final"], True, False, sixteenbit=True)
         print(f"Saved heightmap to {output_file}")
         print(f'Ideally imported with "highest peak" set to {int(highest_peak)} at {map_width}x{map_height}')
 
