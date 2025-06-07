@@ -1415,9 +1415,6 @@ class NodeEditorApp(tk.Tk):
     This is a work in progress, please understand that things are not final and that you may run into bugs, missing features and general oddities.
 
     Nodes are based on plugins. Look at plugin.py and the provided plugins for more documentation on how you can make your own node type. However this is not a stable interface yet and you should expect breaking changes in future WorldStack releases.
-
-    Created by Simon Galle.
-    Check out my game Swarm Universe on Steam if you feel like supporting me.
     """
         help_text = textwrap.dedent(raw_help_text).strip()
 
