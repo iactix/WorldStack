@@ -8,7 +8,7 @@ class Combiner(GeneratorModule):
         self.create_setting("in1", "", "First input image", "input")
         self.create_setting("in2", "", "Second input image", "input")
         self.create_setting("out", "", "Image output name", "output")
-        self.create_setting("mode", "add", "Combination mode: add, subtract, multiply, divide, higher, lower")
+        self.create_setting("mode", "add", "Combination mode: add, subtract, multiply, divide, higher, lower, alpha (uses in2 (0-255) as alpha for in1)")
         self.create_setting("limit_low", 0, "Minimum brightness limit")
         self.create_setting("limit_high", 255, "Maximum brightness limit")
         self.create_setting("clip", True, "Whether to clip the output within limits")
@@ -39,6 +39,9 @@ class Combiner(GeneratorModule):
             map_out = np.maximum(in1, in2)
         elif mode == "lower":
             map_out = np.minimum(in1, in2)
+        elif mode == "alpha":
+            alpha = np.clip(in2 / 255.0, 0.0, 1.0)
+            map_out = in1 * alpha
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
