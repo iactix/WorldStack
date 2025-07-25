@@ -108,3 +108,40 @@ class Transform(GeneratorModule):
         )
 
         return {"out": map_out}
+
+class BrightnessKey(GeneratorModule):
+    def init(self):
+        self.set_type("brightness_key", "processor")
+        self.create_setting("in", "", "Input image", "input")
+        self.create_setting("out", "", "Image output name", "output")
+        self.create_setting("lower", 0, "Lower key value (inclusive)")
+        self.create_setting("upper", 255, "Upper key value (inclusive)")
+        self.create_setting("background", 0, "Value written outside the key range")
+        self.create_setting("mask", 255, "Value written inside the key range when output_mask is True")
+        self.create_setting("output_mask", False, "If True, output mask values instead of source values")
+        return "Keys a brightness range in the source image. Output will become the source image in that range, or the pure mask."
+
+    def apply(self, map_width, map_height, settings, inputs, rng):
+        # Parameters
+        lo = float(settings["lower"])
+        hi = float(settings["upper"])
+        if lo > hi:
+            lo, hi = hi, lo
+
+        background = float(settings["background"])
+        mask_value = float(settings["mask"])
+        output_mask = bool(settings["output_mask"])
+
+        # Input
+        src = inputs.get("in", np.zeros((map_height, map_width), dtype=np.float32))
+
+        # Key
+        m = (src >= lo) & (src <= hi)
+
+        # Output
+        if output_mask:
+            out = np.where(m, mask_value, background)
+        else:
+            out = np.where(m, src, background)
+
+        return {"out": out.astype(src.dtype)}
