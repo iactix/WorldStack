@@ -28,6 +28,8 @@ THUMBNAIL_SIZE = (200, 200)
 # Valid map sizes.
 VALID_MAP_SIZES = [64, 128, 256, 512, 1024, 1081, 2048, 4096]
 
+init_log = []
+
 # FONTS
 try:
     font_regular_10 = ImageFont.truetype("arial.ttf", 10)
@@ -843,15 +845,7 @@ class NodeEditorApp(tk.Tk):
         self.grid_size = 400
         self.grid_color = "#e6e6e6"  # darker
         self.origin_color = "#C0C0C0"
-        self.canvas.bind("<Configure>", lambda e: self.draw_overlay(True))
-        
-        #self.reset_camera()
-
-        def _reset_cam_once(self, _=None):
-            if self.canvas.winfo_width() <= 1 or self.canvas.winfo_height() <= 1:
-                return
-            self.canvas.unbind("<Configure>", self._cam_bind_id)
-            self.reset_camera()  # uses your existing reset_camera()
+        self.init_crap_id = self.canvas.bind("<Configure>", lambda e: self.draw_overlay(True))
 
         self.bind("<Control-s>", lambda event: self.save_template())
         self.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -868,6 +862,11 @@ class NodeEditorApp(tk.Tk):
         self.bind("<KeyPress-Shift_R>", self.on_shift_press)
         self.bind("<KeyRelease-Shift_R>", self.on_shift_release)
         self.bind("<KeyRelease-Escape>", self.on_escape)
+
+        for l in init_log:
+            self.log(l)
+
+        self.log("Welcome back, Commander.", level="important")
 
     def update_title(self):
         if self.current_preset:
@@ -968,7 +967,7 @@ class NodeEditorApp(tk.Tk):
         self.console_text.configure(font=self.console_font)
 
         self.console_text.tag_configure("info", foreground=self.console_text.cget("fg"))
-        self.console_text.tag_configure("important", foreground="#009905", font=self.console_bold)
+        self.console_text.tag_configure("important", foreground="#005503", font=self.console_bold)
         self.console_text.tag_configure("error", foreground="#b00020", font=self.console_bold)
         self.content_pane.add(self.console_frame, minsize=120)
 
@@ -1005,6 +1004,10 @@ class NodeEditorApp(tk.Tk):
     def draw_overlay(self, reset_cam=False):
         if reset_cam:
             self.reset_camera()
+        
+        if self.init_crap_id:
+            self.canvas.unbind("<Configure>", self.init_crap_id)
+            self.init_crap_id = None
 
         c = self.canvas
         w = c.winfo_width()
@@ -1062,7 +1065,6 @@ class NodeEditorApp(tk.Tk):
     def reset_camera(self):
         w = self.canvas.winfo_width()
         h = self.canvas.winfo_height()
-        self.log("cam update")
         self.current_zoom = 1.0
         self.camera_offset_x = -w / 2.0
         self.camera_offset_y = -h / 2.0
@@ -1693,20 +1695,24 @@ class NodeEditorApp(tk.Tk):
 ##############################################################################################################################
 ##############################################################################################################################
 
+def early_log(txt):
+    print(txt)
+    init_log.append(txt)
+
 def run_generator_doc(okay_to_fail = True):
     cmd = [sys.executable, generator_file, "--doc"]
-    print("Generating module documentation...")
+    early_log("Generating module documentation...")
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-        print(result.stdout.strip())
+        early_log(result.stdout.strip())
     except subprocess.CalledProcessError as e: # this exception is basically supposed to mean the generator returned 1
-        print(f"Error running generator:\n{e.stderr.strip()}")
+        early_log(f"Error running generator:\n{e.stderr.strip()}")
         if okay_to_fail:
             sys.exit(1)
         else:
             return e.stderr.strip()
     except Exception as e: # this exception is whatever
-        print(f"Error running generator:\n{e}")
+        early_log(f"Error running generator:\n{e}")
         if okay_to_fail:
             sys.exit(1)
         else:
@@ -1737,7 +1743,7 @@ if __name__ == "__main__":
     start_time = time.perf_counter()
 
     def background_setup():
-        print("WorldStack Editor v0.2.0")
+        early_log("WorldStack Editor v0.2.0")
         run_generator_doc(False)
 
         try:
@@ -1747,7 +1753,7 @@ if __name__ == "__main__":
                 module["type"]: module for module in modules_list
             }
         except Exception as e:
-            print("Error loading doc/modules.json:", e)
+            early_log("Error loading doc/modules.json:", e)
             globals()["NODE_DEFINITIONS"] = {}
 
         elapsed = time.perf_counter() - start_time
@@ -1756,7 +1762,8 @@ if __name__ == "__main__":
 
     def launch_app():
         splash.destroy()
-        print("Starting Editor, you can minimize this window now.")
+        early_log("Starting Editor...")
+        print("You can *minimize* this window now.")
         app = NodeEditorApp()
         app.run()
 
