@@ -6,9 +6,11 @@
             "type": "simplex_noise",
             "out": "noise",
             "scale": 50,
+            "min": 0,
             "max": 255,
-            "_editor_px": 482.4875743946209,
-            "_editor_py": -391.5390032256597
+            "detail": 1,
+            "_editor_px": 176.60522145344441,
+            "_editor_py": -518.0095914609539
         },
         {
             "type": "spline",
@@ -43,8 +45,8 @@
             "passes": 1,
             "strength": 5,
             "mode": "gaussian",
-            "_editor_px": 790.3361568346193,
-            "_editor_py": 397.28788881327716
+            "_editor_px": 1390.3361568346193,
+            "_editor_py": 914.9349476368066
         },
         {
             "type": "blur",
@@ -53,8 +55,8 @@
             "passes": 1,
             "strength": 28,
             "mode": "gaussian",
-            "_editor_px": 471.83543590552506,
-            "_editor_py": -38.22253465727357
+            "_editor_px": 813.0119064937604,
+            "_editor_py": 441.1892300486088
         },
         {
             "type": "combiner",
@@ -65,8 +67,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 769.8324676782012,
-            "_editor_py": -173.55748884655623
+            "_editor_px": 861.0089382664363,
+            "_editor_py": -100.02807708185037
         },
         {
             "type": "level_mapper",
@@ -77,8 +79,8 @@
             "output_low": 0,
             "output_high": 20,
             "clip": true,
-            "_editor_px": 769.3783696792792,
-            "_editor_py": -443.9308992778573
+            "_editor_px": 507.6136637969263,
+            "_editor_py": -532.1661933955045
         },
         {
             "type": "level_mapper",
@@ -89,8 +91,8 @@
             "output_low": 255,
             "output_high": 0,
             "clip": true,
-            "_editor_px": 768.2078307802145,
-            "_editor_py": 112.52642382057115
+            "_editor_px": 515.2666543096263,
+            "_editor_py": 18.408776761747617
         },
         {
             "type": "gradient_mapper",
@@ -100,8 +102,9 @@
                 0,
                 0,
                 0,
-                0,
-                0,
+                1,
+                1,
+                1,
                 1,
                 1,
                 1,
@@ -126,8 +129,8 @@
                 5,
                 6
             ],
-            "_editor_px": 1727.5214811554747,
-            "_editor_py": 228.06098007347452
+            "_editor_px": 1966.2311585748298,
+            "_editor_py": 521.6093671702487
         },
         {
             "type": "level_mapper",
@@ -138,8 +141,8 @@
             "output_low": 0,
             "output_high": 9,
             "clip": true,
-            "_editor_px": 1453.229075104842,
-            "_editor_py": -189.9470769193406
+            "_editor_px": 1427.4226234919386,
+            "_editor_py": -251.23739949998583
         },
         {
             "type": "level_mapper",
@@ -157,7 +160,9 @@
             "type": "simplex_noise",
             "out": "detail",
             "scale": 30,
+            "min": 0,
             "max": 255,
+            "detail": 1,
             "_editor_px": 1151.155318949245,
             "_editor_py": -440.14271949286035
         },
@@ -170,8 +175,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 1765.2870593853336,
-            "_editor_py": -187.6669393649064
+            "_editor_px": 1958.8354464821077,
+            "_editor_py": -297.34435871974506
         },
         {
             "type": "level_mapper",
@@ -182,8 +187,8 @@
             "output_low": 0,
             "output_high": 2,
             "clip": true,
-            "_editor_px": 1454.7939384253077,
-            "_editor_py": -494.5105727452043
+            "_editor_px": 1467.6971642317592,
+            "_editor_py": -707.4137985516563
         },
         {
             "type": "spline",
@@ -222,8 +227,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 486.306921138275,
-            "_editor_py": 582.9489880276411
+            "_editor_px": 436.306921138275,
+            "_editor_py": 677.0666350864648
         },
         {
             "type": "combiner",
