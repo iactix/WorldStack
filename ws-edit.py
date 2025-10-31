@@ -864,7 +864,7 @@ class NodeEditorApp(tk.Tk):
         self.bind("<KeyRelease-Escape>", self.on_escape)
 
         for l in init_log:
-            self.log(l)
+            self.log(l, noprint=True)
 
         self.log("Welcome back, Commander.", level="important")
 
@@ -977,10 +977,11 @@ class NodeEditorApp(tk.Tk):
 
         self.update_title()
     
-    def log(self, *objects, level="info", sep=" ", end="\n"):
+    def log(self, *objects, level="info", sep=" ", end="\n", noprint = False):
         msg = sep.join(str(o) for o in objects)
 
-        print(msg, end=end, flush=True)
+        if noprint == False:
+            print(msg, end=end, flush=True)
 
         w = getattr(self, "console_text", None)
         if w is None:
