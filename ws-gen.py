@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 from plugin import GeneratorModule
+import builtins
 
 def load_plugins():
     instances = []
@@ -93,33 +94,34 @@ def create_execution_order(modules, configs):
 
 
 def save_image(destination, data, normalize, norm_min = True, sixteenbit = False):
-    if normalize:
-        if norm_min:
-            min = data.min()
+    try:
+        if normalize:
+            if norm_min:
+                min = data.min()
+            else:
+                min = 0
+            max = data.max()
+            if max > 255: max = 255
+            if min < 0: min = 0
+            if min == max:
+                min -= 1
+                min += 1
+            
+            if sixteenbit:
+                scaled = (data - min) * (65535.0 / (max - min))
+                img = Image.fromarray(np.clip(scaled, 0, 65535).astype(np.uint16), mode="I;16")
+            else:
+                img = Image.fromarray(np.clip((data - min) * (255.0 / (max - min)), 0, 255).astype(np.uint8), mode="L")
         else:
-            min = 0
-        max = data.max()
-        if max > 255: max = 255
-        if min < 0: min = 0
-        if min == max:
-            min -= 1
-            min += 1
-        
-        if sixteenbit:
-            scaled = (data - min) * (65535.0 / (max - min))
-            img = Image.fromarray(np.clip(scaled, 0, 65535).astype(np.uint16), mode="I;16")
-        else:
-            img = Image.fromarray(np.clip((data - min) * (255.0 / (max - min)), 0, 255).astype(np.uint8), mode="L")
-    else:
-        
-        if sixteenbit:
-            scaled = data * 257  # Assumes input is 0–255, scale to 16-bit
-            img = Image.fromarray(np.clip(scaled, 0, 65535).astype(np.uint16), mode="I;16")
-        else:
-            img = Image.fromarray(np.clip(data, 0, 255).astype(np.uint8), mode="L")
-    
-    
-    img.save(destination)
+            
+            if sixteenbit:
+                scaled = data * 257  # Assumes input is 0–255, scale to 16-bit
+                img = Image.fromarray(np.clip(scaled, 0, 65535).astype(np.uint16), mode="I;16")
+            else:
+                img = Image.fromarray(np.clip(data, 0, 255).astype(np.uint8), mode="L")
+        img.save(destination)
+    except:
+        raise Exception(f'Failed to save image "{destination}"')
 
 
 ############################################################################################################
@@ -260,7 +262,23 @@ def main():
                     print(f'  (i) Using default value for {s} = {module.defaults[s]}')
                     settings[s] = module.defaults[s]
                 else:
+                    setting_datatype = builtins.type(cfg[s]).__name__
                     settings[s] = cfg[s]
+                    if setting_datatype == "list":
+                        if module.types[s] == "list":
+                            # this is fine
+                            pass
+                        elif module.types[s] == "int":
+                            if builtins.len(cfg[s]) != 2:
+                                raise Exception(f'Input \'{cfg[s]}\' type mismatch (list as int has != 2 entries)')
+                            settings[s] = rng.randint(cfg[s][0], cfg[s][1])
+                        elif module.types[s] == "float":
+                            if builtins.len(cfg[s]) != 2:
+                                raise Exception(f'Input \'{cfg[s]}\' type mismatch (list as int has != 2 entries)')
+                            settings[s] = rng.randint(cfg[s][0] * 10000, cfg[s][1] * 10000) / 10000
+                        else:
+                            print(setting_datatype, " vs ", module.types[s])
+                            raise Exception(f'Input \'{cfg[s]}\' type mismatch ({setting_datatype} should be {module.types[s]})')
 
             start_time = time.time()
             
@@ -274,9 +292,10 @@ def main():
 
             if temp_path != "":
                 for key in results.keys():
-                    print("  Saving module output...")
+                    #print("  Saving module output...")
                     save_image(os.path.join(temp_path, f'raw_{cfg[key]}.png'), outputs[cfg[key]], False)
                     save_image(os.path.join(temp_path, f'norm_{cfg[key]}.png'), outputs[cfg[key]], True)
+                    
 
         except Exception as e:
             print(f'  Error executing module: {e}', file=sys.stderr)
@@ -295,7 +314,7 @@ def main():
         print(f'Ideally imported with "highest peak" set to {int(highest_peak)} at {map_width}x{map_height}')
 
 if __name__ == "__main__":
-    print("WorldStack Generator v0.1.0")
+    print("WorldStack Generator v0.2.0")
     start_time = time.time()
     main()
     end_time = time.time()

@@ -92,6 +92,8 @@ class Blur(GeneratorModule):
                 map_out = gaussian_filter(map_out, sigma=strength)
             elif mode == "median":
                 map_out = median_filter(map_out, size=int(strength))
+            else:
+                raise ValueError(f"Unknown mode: {mode}")
 
         return {"out": map_out}
 

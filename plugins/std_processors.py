@@ -83,7 +83,7 @@ class Transform(GeneratorModule):
         ):
             return {"out": map_src.copy()}
 
-        angle_rad = -np.deg2rad(angle_deg)  # negative for counter-clockwise rotation
+        angle_rad = -np.deg2rad(angle_deg)
         cos_a = np.cos(angle_rad)
         sin_a = np.sin(angle_rad)
 
@@ -92,13 +92,9 @@ class Transform(GeneratorModule):
             [sin_a / scale_y,  cos_a / scale_x],
         ])
 
-        center_y = map_height / 2.0
-        center_x = map_width / 2.0
-
-        offset = np.array([
-            center_y - (matrix[0, 0] * center_y + matrix[0, 1] * center_x) - move_y,
-            center_x - (matrix[1, 0] * center_y + matrix[1, 1] * center_x) - move_x,
-        ])
+        center = np.array([map_height / 2.0, map_width / 2.0])
+        T = np.array([move_y, move_x])
+        offset = center - matrix @ (center + T)
 
         map_out = affine_transform(
             map_src,

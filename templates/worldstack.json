@@ -8,35 +8,36 @@
             "file": "worldstack.png",
             "mode": "fit",
             "background": 0,
-            "_editor_px": 187.39396264922823,
-            "_editor_py": 85.00344496150103
+            "_editor_px": -236.61346711626985,
+            "_editor_py": -16.66825227555492
         },
         {
             "type": "simplex_noise",
             "out": "noise",
-            "scale": 20,
-            "max": 1,
-            "_editor_px": 188.79072801190142,
-            "_editor_py": 449.5163882770222
+            "scale": 10,
+            "min": 10,
+            "max": 255,
+            "detail": 3,
+            "_editor_px": 629.4686941135964,
+            "_editor_py": 486.8045238702427
         },
         {
             "type": "combiner",
-            "in1": "logo",
+            "in1": "transform_6",
             "in2": "noise",
             "out": "comb1",
-            "mode": "multiply",
+            "mode": "alpha",
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 498.0945068992151,
-            "_editor_py": 218.5344180670511
+            "_editor_px": 623.5182357127745,
+            "_editor_py": -47.56727684820315
         },
         {
             "type": "gradient_mapper",
             "in": "comb1",
             "out": "final",
             "gradient": [
-                0,
                 0,
                 1,
                 1,
@@ -46,8 +47,33 @@
                 4,
                 5
             ],
-            "_editor_px": 786.9494879879072,
-            "_editor_py": 259.19272936216436
+            "_editor_px": 925.932538835365,
+            "_editor_py": -8.60388080732713
+        },
+        {
+            "type": "transform",
+            "in": "level_mapper_6",
+            "out": "transform_6",
+            "move_x": -10.0,
+            "move_y": -15.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "rotate": 45.0,
+            "background": 0.0,
+            "_editor_px": 331.8780079514544,
+            "_editor_py": -57.5218664992676
+        },
+        {
+            "type": "level_mapper",
+            "in": "logo",
+            "out": "level_mapper_6",
+            "input_low": 0,
+            "input_high": 255,
+            "output_low": 255,
+            "output_high": 0,
+            "clip": true,
+            "_editor_px": 23.368277882402083,
+            "_editor_py": -44.97473796343847
         }
     ]
 }

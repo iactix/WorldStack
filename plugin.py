@@ -1,3 +1,5 @@
+import builtins
+
 class GeneratorModule:
     # ______________
     # Plugin Toolset
@@ -17,6 +19,7 @@ class GeneratorModule:
         doc = {}
         doc["name"] = setting_name
         doc["default"] = default_value
+        doc["type"] = builtins.type(default_value).__name__
         doc["doc"] = documentation
 
         if type == "input":
@@ -30,6 +33,7 @@ class GeneratorModule:
             self.doc["settings"].append(doc)
         
         self.defaults[setting_name] = default_value
+        self.types[setting_name] = doc["type"]
 
     # _____________________
     # Plugin Implementation
@@ -51,6 +55,7 @@ class GeneratorModule:
         self.outputs = []
         self.settings = []
         self.defaults = {}
+        self.types = {}
         self.doc = {}
         self.doc["inputs"] = []
         self.doc["outputs"] = []

@@ -1,28 +1,28 @@
 {
-    "width": 128,
-    "height": 128,
+    "width": 256,
+    "height": 256,
     "modules": [
         {
             "type": "circle",
             "out": "circle_1",
-            "outer_radius": 60,
-            "inner_radius": 30,
+            "outer_radius": 120,
+            "inner_radius": 60,
             "outer_brightness": 0,
             "inner_brightness": 255,
-            "pos_x": 64,
-            "pos_y": 64,
+            "pos_x": 128,
+            "pos_y": 128,
             "_editor_px": 147.5,
             "_editor_py": 71.4848484848485
         },
         {
             "type": "circle",
             "out": "circle_2",
-            "outer_radius": 35,
-            "inner_radius": 15,
+            "outer_radius": 70,
+            "inner_radius": 30,
             "outer_brightness": 0,
             "inner_brightness": 255,
-            "pos_x": 64,
-            "pos_y": 64,
+            "pos_x": 128,
+            "pos_y": 128,
             "_editor_px": 130.5,
             "_editor_py": 496.0
         },
@@ -41,12 +41,12 @@
         {
             "type": "circle",
             "out": "circle_4",
-            "outer_radius": 25,
-            "inner_radius": 12,
+            "outer_radius": 70,
+            "inner_radius": 24,
             "outer_brightness": 0,
             "inner_brightness": 255,
-            "pos_x": 64,
-            "pos_y": 28,
+            "pos_x": 128,
+            "pos_y": 45,
             "_editor_px": 550.212121212121,
             "_editor_py": -212.4848484848485
         },
@@ -67,13 +67,13 @@
             "out": "simplex_noise_6",
             "scale": 10,
             "max": 255,
-            "_editor_px": 940.8413912065971,
-            "_editor_py": 599.8078902229843
+            "_editor_px": 665.8413912065971,
+            "_editor_py": 702.4394691703527
         },
         {
             "type": "combiner",
             "in1": "combiner_5",
-            "in2": "simplex_noise_6",
+            "in2": "level_mapper_24",
             "out": "combiner_7",
             "mode": "alpha",
             "limit_low": 0,
@@ -119,7 +119,7 @@
         {
             "type": "simplex_noise",
             "out": "simplex_noise_9",
-            "scale": 5,
+            "scale": 10,
             "max": 255,
             "_editor_px": 954.4686982443263,
             "_editor_py": 1031.672462119474
@@ -153,8 +153,8 @@
             "out": "simplex_noise_12",
             "scale": 25,
             "max": 255,
-            "_editor_px": 1004.4686982443263,
-            "_editor_py": 1398.3391287861407
+            "_editor_px": 845.1280389036671,
+            "_editor_py": 1425.811656258668
         },
         {
             "type": "combiner",
@@ -172,7 +172,7 @@
             "type": "level_mapper",
             "in": "simplex_noise_12",
             "out": "level_mapper_15",
-            "input_low": 80,
+            "input_low": 100,
             "input_high": 200,
             "output_low": 0,
             "output_high": 40,
@@ -243,7 +243,7 @@
             "in": "level_mapper_20",
             "out": "blur_21",
             "passes": 1,
-            "strength": 3,
+            "strength": 5,
             "mode": "gaussian",
             "_editor_px": 1456.6394147249368,
             "_editor_py": -319.77186908739895
@@ -253,7 +253,7 @@
             "in": "blur_21",
             "out": "level_mapper_22",
             "input_low": 0,
-            "input_high": 50,
+            "input_high": 80,
             "output_low": 0,
             "output_high": 255,
             "clip": true,
@@ -265,7 +265,7 @@
             "in": "combiner_10",
             "out": "blur_23",
             "passes": 1,
-            "strength": 1,
+            "strength": 2,
             "mode": "gaussian",
             "_editor_px": 2658.194064704326,
             "_editor_py": 72.50912309561895
@@ -278,6 +278,18 @@
             "majority": 5,
             "_editor_px": 3213.112833954677,
             "_editor_py": 148.25319215697067
+        },
+        {
+            "type": "level_mapper",
+            "in": "simplex_noise_6",
+            "out": "level_mapper_24",
+            "input_low": 0,
+            "input_high": 255,
+            "output_low": 20,
+            "output_high": 255,
+            "clip": true,
+            "_editor_px": 973.6521174081906,
+            "_editor_py": 480.160676482209
         }
     ]
 }

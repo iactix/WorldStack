@@ -4,6 +4,7 @@
 
 import os, json, subprocess, tkinter as tk, math
 from tkinter import filedialog, messagebox, simpledialog, ttk
+import tkinter.font as tkfont
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 import sys
 import threading
@@ -14,14 +15,10 @@ generator_file = "ws-gen.py"
 def module_output_path(preset_name):
     return os.path.join("output", preset_name, "module_output")
 
-# --- Resampling filter ---
 #resample_filter = Image.Resampling.LANCZOS
 #resample_filter = Image.Resampling.BILINEAR
 resample_filter = Image.Resampling.BICUBIC
 
-# ---------------------------
-# Layout Constants for Nodes
-# ---------------------------
 NODE_MARGIN = 5
 NODE_WIDTH = 200
 NODE_HEADER_HEIGHT = 30
@@ -111,9 +108,12 @@ def parse_from_display(text, expected_type):
 
     return text  # Default to string
 
-# ==========================
+##############################################################################################################################
+##############################################################################################################################
 # Connection Class
-# ==========================
+##############################################################################################################################
+##############################################################################################################################
+
 class Connection:
     def __init__(self, source_node, source_port, target_node, target_port):
         self.source_node = source_node
@@ -207,9 +207,12 @@ class Connection:
         else:
             self.canvas_text_image = canvas.create_image(text_x, text_y, image=self.text_img_photo, anchor="center", state="disabled")
 
-# ==========================
-# Node Class (with baked texture and live editor)
-# ==========================
+##############################################################################################################################
+##############################################################################################################################
+# Node Class
+##############################################################################################################################
+##############################################################################################################################
+
 class Node:
     def __init__(self, editor, node_type, properties=None, x=0, y=0):
         self.editor = editor
@@ -798,9 +801,11 @@ class Node:
         canvas.bind("<Configure>", resize_image)
 
 
-# ==========================
-# Main Editor Application
-# ==========================
+##############################################################################################################################
+##############################################################################################################################
+# Editor Class
+##############################################################################################################################
+##############################################################################################################################
 
 class NodeEditorApp(tk.Tk):
     def __init__(self):
@@ -912,21 +917,76 @@ class NodeEditorApp(tk.Tk):
         add_node_button = tk.Button(toolbar, text="Help", command=self.show_help)
         add_node_button.pack(side=tk.LEFT, padx=2, pady=2)
 
-        self.status_label = tk.Label(toolbar, text="", fg="red")
-        self.status_label.pack(side=tk.RIGHT, padx=10)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
     def create_ui(self):
+        # top-level split: main area (left) and sidebar (right)
         main_pane = tk.PanedWindow(self, orient=tk.HORIZONTAL)
         main_pane.pack(fill=tk.BOTH, expand=True)
-        self.canvas = tk.Canvas(main_pane, bg="white", width=800, height=800)
+
+        # left stack: canvas (top) and console (bottom)
+        self.content_pane = tk.PanedWindow(main_pane, orient=tk.VERTICAL)
+        main_pane.add(self.content_pane, stretch="always")
+
+        # canvas
+        self.canvas = tk.Canvas(self.content_pane, bg="white", width=800, height=800)
         self.canvas.config(scrollregion=(-5000, -5000, 5000, 5000))
-        self.canvas_bg = self.canvas.create_rectangle(-5000, -5000, 5000, 5000, fill="white", outline="", state="disabled")
-        main_pane.add(self.canvas, stretch="always")
+        self.canvas_bg = self.canvas.create_rectangle(
+            -5000, -5000, 5000, 5000, fill="white", outline="", state="disabled"
+        )
+        self.content_pane.add(self.canvas, stretch="always")
+
+        # console frame at the bottom
+        self.console_frame = tk.LabelFrame(self.content_pane, text="Console")
+        self.console_text = tk.Text(self.console_frame, wrap="word", height=10)
+        self.console_text.configure(state="disabled")
+        self.console_text.pack(side="left", fill=tk.BOTH, expand=True)
+
+        self.console_scroll = tk.Scrollbar(self.console_frame, orient="vertical",
+                                        command=self.console_text.yview)
+        self.console_scroll.pack(side="right", fill="y")
+        self.console_text.configure(yscrollcommand=self.console_scroll.set)
+
+        # tags for levels
+        self.console_font = tkfont.nametofont("TkFixedFont")
+        self.console_bold = self.console_font.copy()
+        self.console_bold.configure(weight="bold")
+        self.console_text.configure(font=self.console_font)
+
+        self.console_text.tag_configure("info", foreground=self.console_text.cget("fg"))
+        self.console_text.tag_configure("important", foreground="#009905", font=self.console_bold)
+        self.console_text.tag_configure("error", foreground="#b00020", font=self.console_bold)
+        self.content_pane.add(self.console_frame, minsize=120)
+
+        # sidebar
         self.prop_frame = tk.LabelFrame(main_pane, text="Node Editor", width=300)
         main_pane.add(self.prop_frame)
-        self.prop_widgets = {}
+
         self.update_title()
+    
+    def log(self, *objects, level="info", sep=" ", end="\n"):
+        msg = sep.join(str(o) for o in objects)
+
+        print(msg, end=end, flush=True)
+
+        w = getattr(self, "console_text", None)
+        if w is None:
+            return
+
+        tag = level if level in ("info", "important", "error") else "info"
+
+        w.configure(state="normal")
+        w.insert("end", msg, (tag,))
+        if end:
+            w.insert("end", end)
+        w.see("end")
+
+        # cap lines
+        lines = int(w.index("end-1c").split(".")[0])
+        if lines > 800:
+            w.delete("1.0", f"{lines - 20 + 1}.0")
+
+        w.configure(state="disabled")
 
     # --- Camera Methods ---
     def on_left_mouse_button(self, event):
@@ -1451,13 +1511,12 @@ class NodeEditorApp(tk.Tk):
         container.columnconfigure(0, weight=1)
         container.rowconfigure(0, weight=1)
 
-    def run_generation(self):
+    def run_generation_legacy(self):
         if self.unsaved:
             if messagebox.askyesno("Generation", "Save and continue?"):
                 self.save_template()
             else:
                 return
-        self.status_label.config(text="Processing")
         self.update_idletasks()
         preset_name = self.current_preset
         cmd = [sys.executable, generator_file, f'-i={preset_name}', "--moduleoutput", f'-o={preset_name}']
@@ -1465,12 +1524,74 @@ class NodeEditorApp(tk.Tk):
             subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Generation failed", f"Please check the console output for hints what went wrong.")
-            self.status_label.config(text="")
             return
-        self.status_label.config(text="")
         for node in self.nodes:
             node.draw()
         self.update_all_connections()
+    
+    def _read_stream_live(self, proc: subprocess.Popen):
+        """Read proc stdout live and feed lines into self.log() on the Tk thread."""
+        for line in iter(proc.stdout.readline, ""):
+            # strip only the trailing newline; keep other whitespace
+            self.after(0, self.log, line.rstrip("\n"))
+        proc.stdout.close()
+
+    def run_generation(self):
+        if self.unsaved:
+            if messagebox.askyesno("Generation", "Save and continue?"):
+                self.save_template()
+            else:
+                return
+
+        self.update_idletasks()
+
+        preset_name = self.current_preset
+
+        # Ensure unbuffered stdout from the Python generator
+        cmd = [sys.executable, "-u", generator_file, f"-i={preset_name}", "--moduleoutput", f"-o={preset_name}"]
+
+        # If the tool is not Python, you can try to force line-buffering on *nix:
+        # env = dict(os.environ, PYTHONUNBUFFERED="1")
+        # On Windows this is ignored for non-Python tools.
+        self.log("Running generator...", level="important")
+        try:
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=1,              # line-buffered
+                text=True,              # decode to str
+                encoding="utf-8",
+                errors="replace"
+            )
+        except Exception as e:
+            self.log("Generation failed to start", level="error")
+            return
+
+        # start reader in background
+        t = threading.Thread(target=self._read_stream_live, args=(proc,), daemon=True)
+        t = threading.Thread(target=self._read_stream_live, args=(proc,), daemon=True)
+        t.start()
+
+        def _on_done():
+            ret = proc.poll()
+            if ret is None:
+                # still running; check again soon
+                self.after(100, _on_done)
+                return
+
+            if ret != 0:
+                self.log("Generation failed, look for causes above", level="error")
+                return
+
+            # success path
+            self.log("Generation complete", level="important")
+            for node in self.nodes:
+                node.draw()
+            self.update_all_connections()
+
+        # kick off completion checker
+        self.after(100, _on_done)
 
     def on_close(self):
         if self.unsaved:
@@ -1480,6 +1601,12 @@ class NodeEditorApp(tk.Tk):
 
     def run(self):
         self.mainloop()
+
+##############################################################################################################################
+##############################################################################################################################
+# Startup Stuff
+##############################################################################################################################
+##############################################################################################################################
 
 def run_generator_doc(okay_to_fail = True):
     cmd = [sys.executable, generator_file, "--doc"]
@@ -1501,9 +1628,6 @@ def run_generator_doc(okay_to_fail = True):
             return f'Unknown Error: {e}'
     return ""
 
-# ==========================
-# Main Entry Point
-# ==========================
 if __name__ == "__main__":
     import time
 
@@ -1528,7 +1652,7 @@ if __name__ == "__main__":
     start_time = time.perf_counter()
 
     def background_setup():
-        print("WorldStack Editor v0.1.0")
+        print("WorldStack Editor v0.2.0")
         run_generator_doc(False)
 
         try:
@@ -1547,7 +1671,7 @@ if __name__ == "__main__":
 
     def launch_app():
         splash.destroy()
-        print("Starting Editor")
+        print("Starting Editor, you can minimize this window now.")
         app = NodeEditorApp()
         app.run()
 

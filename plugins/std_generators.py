@@ -12,57 +12,50 @@ from PIL import Image
 import os
 from pyfastnoiselite.pyfastnoiselite import FastNoiseLite, NoiseType
 
-class PerlinNoiseGenerator(GeneratorModule):
-    def init(self):
-        self.set_type("perlin_noise", "generator")
-        self.create_setting("out", "", "Image output name", "output")
-        self.create_setting("scale", 30, "Scales the noise pattern; higher values result in wider waves.")
-        self.create_setting("max", 255, "Maximum brightness")
-        return "Generates a random Perlin noise pattern."
-
-    def apply(self, map_width, map_height, settings, inputs, rng):
-        scale = 1.0 / settings["scale"]
-        half_noise_height = settings["max"] / 2
-        map_out = np.zeros((map_height, map_width), dtype=np.float32)
-
-        noise = FastNoiseLite(seed=rng.randint(0, 1000000))
-        noise.noise_type = NoiseType.NoiseType_Perlin
-        noise.frequency = scale  # Set frequency directly
-
-        rndx = rng.randint(0, 1000000) / 100.0
-        rndy = rng.randint(0, 1000000) / 100.0
-
-        for i in range(map_height):
-            for j in range(map_width):
-                val = noise.get_noise(i + rndx, j + rndy)
-                map_out[i][j] = (val + 1) * half_noise_height
-
-        return {"out": map_out}
-
 class SimplexNoiseGenerator(GeneratorModule):
     def init(self):
         self.set_type("simplex_noise", "generator")
         self.create_setting("out", "", "Image output name", "output")
         self.create_setting("scale", 30, "Scales the noise pattern; higher values result in wider waves.")
+        self.create_setting("min", 0, "Minimum brightness")
         self.create_setting("max", 255, "Maximum brightness")
-        return "Generates a random Simplex noise pattern."
+        self.create_setting("detail", 1, "Adds fractal detail; 1 = original, higher = more detail.")
+        return "Generates a random simplex noise pattern, usually the basis of most random world generations."
 
     def apply(self, map_width, map_height, settings, inputs, rng):
-        scale = 1.0 / (settings["scale"] * 2)
-        half_noise_height = settings["max"] / 2
+        scale = 1.0 / (settings["scale"] * 2.0)
+        vmin = float(settings["min"])
+        vmax = float(settings["max"])
+        span = vmax - vmin
         map_out = np.zeros((map_height, map_width), dtype=np.float32)
 
-        noise = FastNoiseLite(seed=rng.randint(0, 1000000))
+        noise = FastNoiseLite(seed=rng.randint(0, 1_000_000))
         noise.noise_type = NoiseType.NoiseType_OpenSimplex2
-        noise.frequency = scale  # Set frequency directly
+        noise.frequency = scale
 
-        rndx = rng.randint(0, 1000000) / 100.0
-        rndy = rng.randint(0, 1000000) / 100.0
+        detail = int(settings.get("detail", 1))
+        if detail > 1:
+            ft = getattr(FastNoiseLite, "FractalType_FBm", None)
+            if ft is None:
+                from pyfastnoiselite.pyfastnoiselite import FractalType
+                ft = FractalType.FractalType_FBm
+
+            octaves = int(np.clip(detail, 2, 8))
+            gain = 0.20 + 0.05 * (octaves - 2)
+            noise.fractal_type = ft
+            noise.fractal_octaves = octaves
+            noise.fractal_lacunarity = 2.0
+            noise.fractal_gain = gain
+
+        rndx = rng.randint(0, 1_000_000) / 100.0
+        rndy = rng.randint(0, 1_000_000) / 100.0
 
         for i in range(map_height):
+            xi = i + rndx
             for j in range(map_width):
-                val = noise.get_noise(i + rndx, j + rndy)
-                map_out[i][j] = (val + 1) * half_noise_height
+                v = noise.get_noise(xi, j + rndy)  # [-1,1]
+                n = (v + 1.0) * 0.5                # [0,1]
+                map_out[i, j] = vmin + n * span    # [min,max]
 
         return {"out": map_out}
     
