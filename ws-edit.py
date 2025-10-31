@@ -1065,9 +1065,10 @@ class NodeEditorApp(tk.Tk):
     def reset_camera(self):
         w = self.canvas.winfo_width()
         h = self.canvas.winfo_height()
-        self.current_zoom = 1.0
-        self.camera_offset_x = -w / 2.0
-        self.camera_offset_y = -h / 2.0
+        z = 0.5
+        self.current_zoom = z
+        self.camera_offset_x = -w / (2.0 * z)
+        self.camera_offset_y = -h / (2.0 * z)
 
     def on_left_mouse_button(self, event):
         items = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)

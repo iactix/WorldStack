@@ -11,8 +11,8 @@
             "inner_brightness": 255,
             "pos_x": 128,
             "pos_y": 128,
-            "_editor_px": 147.5,
-            "_editor_py": 71.4848484848485
+            "_editor_px": -1644.4047619047617,
+            "_editor_py": -984.7056277056281
         },
         {
             "type": "circle",
@@ -23,8 +23,8 @@
             "inner_brightness": 255,
             "pos_x": 128,
             "pos_y": 128,
-            "_editor_px": 130.5,
-            "_editor_py": 496.0
+            "_editor_px": -1643.0714285714284,
+            "_editor_py": -445.19047619047626
         },
         {
             "type": "combiner",
@@ -35,8 +35,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 531.5,
-            "_editor_py": 196.0
+            "_editor_px": -1149.452380952381,
+            "_editor_py": -761.1428571428571
         },
         {
             "type": "circle",
@@ -47,8 +47,8 @@
             "inner_brightness": 255,
             "pos_x": 128,
             "pos_y": 45,
-            "_editor_px": 550.212121212121,
-            "_editor_py": -212.4848484848485
+            "_editor_px": -1149.7878787878792,
+            "_editor_py": -1188.6753246753246
         },
         {
             "type": "combiner",
@@ -59,16 +59,18 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 948.6969696969693,
-            "_editor_py": 20.848484848484873
+            "_editor_px": -737.0173160173165,
+            "_editor_py": -888.6753246753246
         },
         {
             "type": "simplex_noise",
             "out": "simplex_noise_6",
             "scale": 10,
+            "min": 0,
             "max": 255,
-            "_editor_px": 665.8413912065971,
-            "_editor_py": 702.4394691703527
+            "detail": 1,
+            "_editor_px": -1614.1586087934031,
+            "_editor_py": 28.629945360829083
         },
         {
             "type": "combiner",
@@ -79,8 +81,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 1318.4262968669746,
-            "_editor_py": 182.82675814751286
+            "_editor_px": -343.2403697996924,
+            "_editor_py": -420.7446704239158
         },
         {
             "type": "gradient_mapper",
@@ -113,16 +115,18 @@
                 5,
                 10
             ],
-            "_editor_px": 2934.7328164709656,
-            "_editor_py": 111.12405619004012
+            "_editor_px": 1240.1873619255114,
+            "_editor_py": 493.3967834627674
         },
         {
             "type": "simplex_noise",
             "out": "simplex_noise_9",
             "scale": 10,
+            "min": 0,
             "max": 255,
-            "_editor_px": 954.4686982443263,
-            "_editor_py": 1031.672462119474
+            "detail": 1,
+            "_editor_px": -1582.8040290284011,
+            "_editor_py": 467.12700757401944
         },
         {
             "type": "combiner",
@@ -133,8 +137,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 2405.063082951614,
-            "_editor_py": 38.43172137873307
+            "_editor_px": 1109.6085374970685,
+            "_editor_py": -390.65918771217605
         },
         {
             "type": "level_mapper",
@@ -145,16 +149,18 @@
             "output_low": 0,
             "output_high": 27,
             "clip": true,
-            "_editor_px": 1382.2464760221044,
-            "_editor_py": 727.9687584157703
+            "_editor_px": -1050.0262512506226,
+            "_editor_py": 504.7869402339518
         },
         {
             "type": "simplex_noise",
             "out": "simplex_noise_12",
             "scale": 25,
+            "min": 0,
             "max": 255,
-            "_editor_px": 845.1280389036671,
-            "_editor_py": 1425.811656258668
+            "detail": 1,
+            "_editor_px": -1571.235597459969,
+            "_editor_py": 945.3571108041226
         },
         {
             "type": "combiner",
@@ -165,8 +171,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 1785.1849738255976,
-            "_editor_py": 1180.1295498726079
+            "_editor_px": -322.99684435622044,
+            "_editor_py": 761.0386407816989
         },
         {
             "type": "level_mapper",
@@ -177,8 +183,8 @@
             "output_low": 0,
             "output_high": 40,
             "clip": true,
-            "_editor_px": 1387.8020315776598,
-            "_editor_py": 1296.4872769342887
+            "_editor_px": -1039.9252411496132,
+            "_editor_py": 988.7600042070158
         },
         {
             "type": "combiner",
@@ -189,8 +195,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 2374.798019480067,
-            "_editor_py": 833.6001370034339
+            "_editor_px": 411.16165584370356,
+            "_editor_py": 756.3274097307067
         },
         {
             "type": "level_mapper",
@@ -201,8 +207,8 @@
             "output_low": 0,
             "output_high": 255,
             "clip": true,
-            "_editor_px": 1730.7332969404424,
-            "_editor_py": 704.5008230399114
+            "_editor_px": -318.3576121504667,
+            "_editor_py": 191.3190048580932
         },
         {
             "type": "blur",
@@ -211,8 +217,8 @@
             "passes": 1,
             "strength": 5,
             "mode": "gaussian",
-            "_editor_px": 2023.993046361787,
-            "_editor_py": 810.3309398112991
+            "_editor_px": 97.62940999815055,
+            "_editor_py": 219.87639435675362
         },
         {
             "type": "combiner",
@@ -223,8 +229,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 2010.6151555637211,
-            "_editor_py": -343.7595625254275
+            "_editor_px": 706.0697010182666,
+            "_editor_py": -349.66865343451843
         },
         {
             "type": "level_mapper",
@@ -235,8 +241,8 @@
             "output_low": 0,
             "output_high": 255,
             "clip": true,
-            "_editor_px": 1207.1889538881942,
-            "_editor_py": -410.027758133432
+            "_editor_px": -340.4300937308535,
+            "_editor_py": -886.2182343239082
         },
         {
             "type": "blur",
@@ -245,8 +251,8 @@
             "passes": 1,
             "strength": 5,
             "mode": "gaussian",
-            "_editor_px": 1456.6394147249368,
-            "_editor_py": -319.77186908739895
+            "_editor_px": -14.789156703634717,
+            "_editor_py": -881.6766309921609
         },
         {
             "type": "level_mapper",
@@ -257,8 +263,8 @@
             "output_low": 0,
             "output_high": 255,
             "clip": true,
-            "_editor_px": 1732.997068551623,
-            "_editor_py": -426.81630794758973
+            "_editor_px": 337.7589733135276,
+            "_editor_py": -874.4353555666374
         },
         {
             "type": "blur",
@@ -267,8 +273,8 @@
             "passes": 1,
             "strength": 2,
             "mode": "gaussian",
-            "_editor_px": 2658.194064704326,
-            "_editor_py": 72.50912309561895
+            "_editor_px": 828.1940647043259,
+            "_editor_py": 808.8727594592555
         },
         {
             "type": "despiker",
@@ -276,8 +282,8 @@
             "out": "final",
             "passes": 5,
             "majority": 5,
-            "_editor_px": 3213.112833954677,
-            "_editor_py": 148.25319215697067
+            "_editor_px": 1551.749197591041,
+            "_editor_py": -125.83771693393828
         },
         {
             "type": "level_mapper",
@@ -288,8 +294,8 @@
             "output_low": 20,
             "output_high": 255,
             "clip": true,
-            "_editor_px": 973.6521174081906,
-            "_editor_py": 480.160676482209
+            "_editor_px": -1075.1574064013332,
+            "_editor_py": -21.505990184457744
         }
     ]
 }

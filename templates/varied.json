@@ -8,9 +8,9 @@
             "scale": 100,
             "min": 0,
             "max": 128,
-            "detail": 4,
-            "_editor_px": -128.90977443609017,
-            "_editor_py": 268.7142857142857
+            "detail": 5,
+            "_editor_px": -974.6247416394293,
+            "_editor_py": -710.978021978022
         },
         {
             "type": "gradient_mapper",
@@ -40,8 +40,8 @@
                 6,
                 7
             ],
-            "_editor_px": 843.6802383316783,
-            "_editor_py": 752.7944389275073
+            "_editor_px": 177.7315203829603,
+            "_editor_py": -91.82094568787738
         },
         {
             "type": "simplex_noise",
@@ -50,8 +50,8 @@
             "min": 0,
             "max": 128,
             "detail": 8,
-            "_editor_px": -103.64264434671588,
-            "_editor_py": 724.0985955454674
+            "_editor_px": -961.3862340903056,
+            "_editor_py": -246.77319932632736
         },
         {
             "type": "combiner",
@@ -62,18 +62,18 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 278.1618669314796,
-            "_editor_py": 511.45283018867906
+            "_editor_px": -615.9919792223666,
+            "_editor_py": -496.13691340106453
         },
         {
             "type": "simplex_noise",
             "out": "simplex_noise_11",
             "scale": 600,
-            "min": 0,
+            "min": -50,
             "max": 255,
-            "detail": 3,
-            "_editor_px": -26.105277776347634,
-            "_editor_py": 1185.6866390537707
+            "detail": 8,
+            "_editor_px": -946.8566194579219,
+            "_editor_py": 182.33541663278095
         },
         {
             "type": "combiner",
@@ -84,8 +84,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 528.5939703439533,
-            "_editor_py": 824.220473640237
+            "_editor_px": -260.84192709194406,
+            "_editor_py": -134.13850071873742
         },
         {
             "type": "despiker",
@@ -93,8 +93,8 @@
             "out": "final",
             "passes": 10,
             "majority": 5,
-            "_editor_px": 1196.346172216015,
-            "_editor_py": 752.0005763601067
+            "_editor_px": 589.3360350663427,
+            "_editor_py": -89.3661499368522
         }
     ]
 }

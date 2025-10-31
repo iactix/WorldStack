@@ -8,8 +8,8 @@
             "file": "worldstack.png",
             "mode": "fit",
             "background": 0,
-            "_editor_px": -236.61346711626985,
-            "_editor_py": -16.66825227555492
+            "_editor_px": -852.7563242591269,
+            "_editor_py": -174.95396656126923
         },
         {
             "type": "simplex_noise",
@@ -18,8 +18,8 @@
             "min": 10,
             "max": 255,
             "detail": 3,
-            "_editor_px": 629.4686941135964,
-            "_editor_py": 486.8045238702427
+            "_editor_px": -104.67416302926097,
+            "_editor_py": 91.23309529881402
         },
         {
             "type": "combiner",
@@ -30,8 +30,8 @@
             "limit_low": 0,
             "limit_high": 255,
             "clip": true,
-            "_editor_px": 623.5182357127745,
-            "_editor_py": -47.56727684820315
+            "_editor_px": 219.0896642842032,
+            "_editor_py": -194.13870541963183
         },
         {
             "type": "gradient_mapper",
@@ -47,21 +47,21 @@
                 4,
                 5
             ],
-            "_editor_px": 925.932538835365,
-            "_editor_py": -8.60388080732713
+            "_editor_px": 593.9325388353654,
+            "_editor_py": -147.74673795018418
         },
         {
             "type": "transform",
             "in": "level_mapper_6",
             "out": "transform_6",
             "move_x": -10.0,
-            "move_y": -15.0,
+            "move_y": -10.0,
             "scale_x": 1.0,
             "scale_y": 1.0,
             "rotate": 45.0,
             "background": 0.0,
-            "_editor_px": 331.8780079514544,
-            "_editor_py": -57.5218664992676
+            "_editor_px": -115.69342061997384,
+            "_editor_py": -567.3790093564104
         },
         {
             "type": "level_mapper",
@@ -72,8 +72,8 @@
             "output_low": 255,
             "output_high": 0,
             "clip": true,
-            "_editor_px": 23.368277882402083,
-            "_editor_py": -44.97473796343847
+            "_editor_px": -462.48886497474064,
+            "_editor_py": -223.5461665348671
         }
     ]
 }
