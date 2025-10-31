@@ -823,9 +823,9 @@ class NodeEditorApp(tk.Tk):
         self.drag_data = {}
         self._node_id_counter = 1
         self.is_panning = False
-        self.current_zoom = 1.0
-        self.camera_offset_x = 0.0
-        self.camera_offset_y = 0.0
+        #self.current_zoom = 1.0
+        #self.camera_offset_x = 0.0
+        #self.camera_offset_y = 0.0
         self.pan_start_x = 0
         self.pan_start_y = 0
         self.pan_start_camera_x = 0
@@ -839,6 +839,20 @@ class NodeEditorApp(tk.Tk):
         self.create_toolbar()
         self.create_ui()
         
+        self.canvas.tag_lower(self.canvas_bg)
+        self.grid_size = 400
+        self.grid_color = "#e6e6e6"  # darker
+        self.origin_color = "#C0C0C0"
+        self.canvas.bind("<Configure>", lambda e: self.draw_overlay(True))
+        
+        #self.reset_camera()
+
+        def _reset_cam_once(self, _=None):
+            if self.canvas.winfo_width() <= 1 or self.canvas.winfo_height() <= 1:
+                return
+            self.canvas.unbind("<Configure>", self._cam_bind_id)
+            self.reset_camera()  # uses your existing reset_camera()
+
         self.bind("<Control-s>", lambda event: self.save_template())
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.canvas.bind("<ButtonPress-3>", self.on_right_button_press)
@@ -988,7 +1002,71 @@ class NodeEditorApp(tk.Tk):
 
         w.configure(state="disabled")
 
+    def draw_overlay(self, reset_cam=False):
+        if reset_cam:
+            self.reset_camera()
+
+        c = self.canvas
+        w = c.winfo_width()
+        h = c.winfo_height()
+        if w <= 1 or h <= 1:
+            return
+
+        c.delete("overlay")
+
+        zoom = self.current_zoom
+        cam_x = self.camera_offset_x
+        cam_y = self.camera_offset_y
+
+        left = cam_x
+        top = cam_y
+        right = cam_x + w / zoom
+        bottom = cam_y + h / zoom
+
+        grid = float(getattr(self, "grid_size", 100.0))
+        gc = getattr(self, "grid_color", "#bdbdbd")
+        oc = getattr(self, "origin_color", "#ff3b30")
+
+        # verticals
+        kx = math.floor(left / grid)
+        x = kx * grid
+        while x <= right:
+            sx = (x - cam_x) * zoom
+            c.create_line(sx, 0.0, sx, float(h), fill=gc, width=1, tags=("overlay",))
+            kx += 1
+            x = kx * grid
+
+        # horizontals
+        ky = math.floor(top / grid)
+        y = ky * grid
+        while y <= bottom:
+            sy = (y - cam_y) * zoom
+            c.create_line(0.0, sy, float(w), sy, fill=gc, width=1, tags=("overlay",))
+            ky += 1
+            y = ky * grid
+
+        # origin crosshair
+        ox = (-cam_x) * zoom
+        oy = (-cam_y) * zoom
+        cross = 8.0
+        c.create_line(ox - cross, oy, ox + cross, oy, fill=oc, width=2, tags=("overlay",))
+        c.create_line(ox, oy - cross, ox, oy + cross, fill=oc, width=2, tags=("overlay",))
+
+        try:
+            c.tag_raise("overlay", self.canvas_bg)
+        except Exception:
+            pass
+
     # --- Camera Methods ---
+
+    def reset_camera(self):
+        w = self.canvas.winfo_width()
+        h = self.canvas.winfo_height()
+        self.log("cam update")
+        self.current_zoom = 1.0
+        self.camera_offset_x = -w / 2.0
+        self.camera_offset_y = -h / 2.0
+
     def on_left_mouse_button(self, event):
         items = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
         interactive_items = [i for i in items if self.canvas.itemcget(i, "state") != "disabled"]
@@ -1007,6 +1085,7 @@ class NodeEditorApp(tk.Tk):
         self.pan_start_camera_y = self.camera_offset_y
 
     def on_pan_drag(self, event):
+        self.draw_overlay()
         dx = event.x - self.pan_start_x
         dy = event.y - self.pan_start_y
         self.camera_offset_x = self.pan_start_camera_x - dx / self.current_zoom
@@ -1045,9 +1124,10 @@ class NodeEditorApp(tk.Tk):
             factor = 0.9
         else:
             factor = 1.0
+
         old_zoom = self.current_zoom
         raw_zoom = old_zoom * factor
-        step = 0.01  # adjustable zoom step
+        step = 0.01
         new_zoom = round(raw_zoom / step) * step
         if new_zoom == old_zoom:
             if factor > 1:
@@ -1056,6 +1136,7 @@ class NodeEditorApp(tk.Tk):
                 new_zoom = old_zoom - step
         if new_zoom < 0.2 or new_zoom > 2.0:
             return
+
         mx, my = event.x, event.y
         logical_x = mx / old_zoom + self.camera_offset_x
         logical_y = my / old_zoom + self.camera_offset_y
@@ -1063,18 +1144,20 @@ class NodeEditorApp(tk.Tk):
         self.camera_offset_x = logical_x - mx / new_zoom
         self.camera_offset_y = logical_y - my / new_zoom
 
-        # Instead of immediately updating every node and connection, schedule the heavy update.
-        if hasattr(self, '_zoom_update_job') and self._zoom_update_job is not None:
-                self.after_cancel(self._zoom_update_job)
-        if self.current_zoom > 1.0:
-            self._zoom_update_job = self.after(25, self.perform_zoom_update)
-        else:
-            self.perform_zoom_update()
+        # redraw overlay NOW so it matches this zoom exactly
+        self.draw_overlay()
+
+        # debounce heavy updates for nodes/connections only
+        if getattr(self, "_zoom_update_job", None):
+            self.after_cancel(self._zoom_update_job)
+        self._zoom_update_job = self.after(25, self.perform_zoom_update)
 
     def perform_zoom_update(self):
         for node in self.nodes:
             node.update()
         self.update_all_connections()
+        # optional: keep or drop this; overlay was already updated immediately
+        # self.draw_overlay()
         self._zoom_update_job = None
 
     def on_escape(self, event):
@@ -1342,6 +1425,7 @@ class NodeEditorApp(tk.Tk):
             messagebox.showerror("Error", f"Failed to open file: {e}")
             return
         self.clear_canvas()
+        self.reset_camera()
         self.nodes = []
         self.connections = []
         self.current_preset = os.path.splitext(os.path.basename(filepath))[0]
@@ -1365,6 +1449,7 @@ class NodeEditorApp(tk.Tk):
             self.auto_layout()
         self.canvas.configure(scrollregion=self.canvas.bbox("all") or (-5000, -5000, 5000, 5000))
         self.canvas.update_idletasks()
+        self.draw_overlay()
         for node in self.nodes:
             node.draw()
         self.set_unsaved(False)
