@@ -136,6 +136,7 @@ def main():
     usage_msg += "Options:\n"
     usage_msg += "<Template Name>     |  Required, specify name of template in '/templates/' without path or .json. Also works in the form -i=\n"
     usage_msg += "-o=<Output Name>    |  Optional, specify name of target image in '/output/<Template Name>/' without path or .png. Defaults to timestamped name\n"
+    usage_msg += "-a=<Alias Name>     |  Optional, makes the generator act as if this was the template name while still loading the actually specified template file.\n"
     usage_msg += "--moduleoutput      |  Optional, triggers creation of individual module output images in '/output/<Template Name>/module_output'\n"
     usage_msg += "--doc               |  Writes available module documentation to '/doc/' as json (overrides other behavior)\n"
     usage_msg += "-h or --help        |  Print this message (overrides other behavior)\n"
@@ -143,6 +144,7 @@ def main():
 
     arg_out = ""
     arg_moduleout = False
+    arg_alias = ""
     
     os.makedirs("templates", exist_ok=True)
     os.makedirs("output", exist_ok=True)
@@ -154,6 +156,8 @@ def main():
             input_specs += 1
         elif arg.startswith("-o="):
             arg_out = arg[3:]    
+        elif arg.startswith("-a="):
+            arg_alias = arg[3:]    
         elif arg == "--moduleoutput":
             arg_moduleout = True
         elif arg == "--doc":
@@ -183,16 +187,21 @@ def main():
         print(usage_msg)
         sys.exit(1)
 
-    os.makedirs(os.path.join("output", template_name), exist_ok=True)
+    template_filename = template_name
+    template_alias = template_name
+    if arg_alias != "":
+        template_alias = arg_alias
+
+    os.makedirs(os.path.join("output", template_alias), exist_ok=True)
     
     if arg_out != "":
-        output_file = os.path.join("output", template_name, f"{arg_out}.png")
+        output_file = os.path.join("output", template_alias, f"{arg_out}.png")
     else:
         timestamp = datetime.now().strftime("%y%m%d%H%M%S")
-        output_file = os.path.join("output", template_name, f"{template_name}_{timestamp}.png")
+        output_file = os.path.join("output", template_alias, f"{template_alias}_{timestamp}.png")
 
     if arg_moduleout == True:
-        temp_path = os.path.join("output", template_name, "module_output")
+        temp_path = os.path.join("output", template_alias, "module_output")
         os.makedirs(temp_path, exist_ok=True)
 
     if not temp_path and not output_file:
@@ -200,7 +209,7 @@ def main():
         print(usage_msg)
         sys.exit(1)
 
-    template_file = os.path.join("templates", f"{template_name}.json")
+    template_file = os.path.join("templates", f"{template_filename}.json")
 
     # Load the preset JSON
     if not os.path.isfile(template_file):

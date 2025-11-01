@@ -1458,23 +1458,27 @@ class NodeEditorApp(tk.Tk):
             node.draw()
         self.set_unsaved(False)
 
-    def save_template(self):
-        self.save_template_as(no_as = True)
+    def save_template(self, as_copy=""):
+        self.save_template_as(no_as = True, as_copy=as_copy)
 
-    def save_template_as(self, no_as = False):
+    def save_template_as(self, no_as = False, as_copy=""):
         tmpl_dir = os.path.join(os.getcwd(), "templates")
         if not os.path.exists(tmpl_dir):
             os.makedirs(tmpl_dir)
-        if no_as == False or not self.current_preset:
+        if (no_as == False or not self.current_preset) and as_copy == "":
             file_path = filedialog.asksaveasfilename(initialdir=tmpl_dir, defaultextension=".json",
                                                     filetypes=[("JSON files", "*.json")],
                                                     title="Save Template As")
         else:
-            file_path = os.path.join(tmpl_dir, f"{self.current_preset}.json")
+            if as_copy == "":
+                file_path = os.path.join(tmpl_dir, f"{self.current_preset}.json")
+            else:
+                file_path = os.path.join(tmpl_dir, f"{as_copy}.json")
 
         if not file_path:
             return
-        self.current_preset = os.path.splitext(os.path.basename(file_path))[0]
+        if as_copy == "":
+            self.current_preset = os.path.splitext(os.path.basename(file_path))[0]
         data = {"width": self.map_width, "height": self.map_height, "modules": [node.to_json() for node in self.nodes]}
         try:
             with open(file_path, "w") as f:
@@ -1482,7 +1486,8 @@ class NodeEditorApp(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save file: {e}")
             return
-        self.set_unsaved(False)
+        if as_copy == "":
+            self.set_unsaved(False)
 
     def clear_canvas(self):
         self.canvas.delete("all")
@@ -1626,22 +1631,21 @@ class NodeEditorApp(tk.Tk):
         proc.stdout.close()
 
     def run_generation(self):
-        if self.unsaved:
-            if messagebox.askyesno("Generation", "Save and continue?"):
-                self.save_template()
-            else:
-                return
+        #if self.unsaved:
+        #    if messagebox.askyesno("Generation", "Save and continue?"):
+        #        self.save_template()
+        #    else:
+        #        return
+
+        self.save_template(as_copy="editor_autogen")
 
         self.update_idletasks()
 
         preset_name = self.current_preset
 
         # Ensure unbuffered stdout from the Python generator
-        cmd = [sys.executable, "-u", generator_file, f"-i={preset_name}", "--moduleoutput", f"-o={preset_name}"]
-
-        # If the tool is not Python, you can try to force line-buffering on *nix:
-        # env = dict(os.environ, PYTHONUNBUFFERED="1")
-        # On Windows this is ignored for non-Python tools.
+        #cmd = [sys.executable, "-u", generator_file, f"-i={preset_name}", "--moduleoutput", f"-o={preset_name}"]
+        cmd = [sys.executable, "-u", generator_file, f"-i=editor_autogen", "--moduleoutput", f"-o={preset_name}", f"-a={preset_name}"]
         self.log("Running generator...", level="important")
         try:
             proc = subprocess.Popen(
