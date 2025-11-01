@@ -267,6 +267,9 @@ class Node:
             if key != "type" and not key.startswith("_"):
                 result[key] = value
         return result
+    
+    def set_dirty(self):
+        self.editor.set_dirty(self)
 
     def draw(self):
         self.bake_texture()
@@ -356,6 +359,7 @@ class Node:
         #self.editor.update_all_connections()
         self.editor.rebuild_connections()
         self.editor.set_unsaved()
+        self.set_dirty()
 
     def on_drag(self, event):
         if self.editor.is_panning or self.dragging == False:
@@ -769,6 +773,7 @@ class Node:
         self.editor.cancel_pending_connection()
         self.editor.rebuild_connections()
         self.editor.set_unsaved(True)
+        self.set_dirty()
 
     def on_graphics_click(self, event):
         self.open_full_image_in_editor("norm")
@@ -837,6 +842,10 @@ class NodeEditorApp(tk.Tk):
         self.mouse_y = 0
         self.pending_connection = None
 
+        self.generation_version = 0
+        self.generation_version_target = 0
+        self.generaton_version_inprogress = 0
+
         self.create_menu()
         self.create_toolbar()
         self.create_ui()
@@ -867,6 +876,13 @@ class NodeEditorApp(tk.Tk):
             self.log(l, noprint=True)
 
         self.log("Welcome back, Commander.", level="important")
+        self.after(1000, self.tick)  # one-line setup
+
+    def tick(self):
+        if self.generaton_version_inprogress == 0:
+            if self.generation_version_target > self.generation_version:
+                self.run_generation()
+        self.after(1000, self.tick)  # reschedule
 
     def update_title(self):
         if self.current_preset:
@@ -880,6 +896,9 @@ class NodeEditorApp(tk.Tk):
     def set_unsaved(self, flag=True):
         self.unsaved = flag
         self.update_title()
+    
+    def set_dirty(self, node=None):
+        self.generation_version_target += 1
 
     # --- Menus ---
     def create_menu(self):
@@ -915,6 +934,7 @@ class NodeEditorApp(tk.Tk):
             self.map_width = width_var.get()
             self.map_height = height_var.get()
             self.set_unsaved(True)
+            self.set_dirty()
             top.destroy()
 
         tk.Button(top, text="OK", command=apply).grid(row=2, column=0, columnspan=2, pady=10)
@@ -1300,6 +1320,7 @@ class NodeEditorApp(tk.Tk):
         self.nodes.append(node)
         self.update_all_connections()
         self.set_unsaved(True)
+        self.set_dirty(node)
 
     def delete_selected_node(self):
         # 1) Find all selected nodes
@@ -1457,11 +1478,13 @@ class NodeEditorApp(tk.Tk):
         for node in self.nodes:
             node.draw()
         self.set_unsaved(False)
+        self.set_dirty()
 
     def save_template(self, as_copy=""):
         self.save_template_as(no_as = True, as_copy=as_copy)
 
     def save_template_as(self, no_as = False, as_copy=""):
+        name_before = self.current_preset
         tmpl_dir = os.path.join(os.getcwd(), "templates")
         if not os.path.exists(tmpl_dir):
             os.makedirs(tmpl_dir)
@@ -1488,6 +1511,9 @@ class NodeEditorApp(tk.Tk):
             return
         if as_copy == "":
             self.set_unsaved(False)
+
+        if name_before != self.current_preset:
+            self.set_dirty()
 
     def clear_canvas(self):
         self.canvas.delete("all")
@@ -1631,6 +1657,7 @@ class NodeEditorApp(tk.Tk):
         proc.stdout.close()
 
     def run_generation(self):
+        self.generaton_version_inprogress = self.generation_version_target
         #if self.unsaved:
         #    if messagebox.askyesno("Generation", "Save and continue?"):
         #        self.save_template()
@@ -1675,6 +1702,8 @@ class NodeEditorApp(tk.Tk):
 
             if ret != 0:
                 self.log("Generation failed, look for causes above", level="error")
+                self.generation_version = self.generaton_version_inprogress
+                self.generaton_version_inprogress = 0
                 return
 
             # success path
@@ -1682,6 +1711,8 @@ class NodeEditorApp(tk.Tk):
             for node in self.nodes:
                 node.draw()
             self.update_all_connections()
+            self.generation_version = self.generaton_version_inprogress
+            self.generaton_version_inprogress = 0
 
         # kick off completion checker
         self.after(100, _on_done)
