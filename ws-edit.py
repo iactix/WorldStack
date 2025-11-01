@@ -1702,6 +1702,9 @@ class NodeEditorApp(tk.Tk):
 
             if ret != 0:
                 self.log("Generation failed, look for causes above", level="error")
+                for node in self.nodes:
+                    node.draw()
+                self.update_all_connections()
                 self.generation_version = self.generaton_version_inprogress
                 self.generaton_version_inprogress = 0
                 return
