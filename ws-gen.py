@@ -137,6 +137,7 @@ def main():
     usage_msg += "<Template Name>     |  Required, specify name of template in '/templates/' without path or .json. Also works in the form -i=\n"
     usage_msg += "-o=<Output Name>    |  Optional, specify name of target image in '/output/<Template Name>/' without path or .png. Defaults to timestamped name\n"
     usage_msg += "-a=<Alias Name>     |  Optional, makes the generator act as if this was the template name while still loading the actually specified template file.\n"
+    usage_msg += "-s=<Seed>           |  Optional, sets the RNG seed (number), useful for repeating results. Default is 0, meaning a random RNG seed.\n"
     usage_msg += "--moduleoutput      |  Optional, triggers creation of individual module output images in '/output/<Template Name>/module_output'\n"
     usage_msg += "--doc               |  Writes available module documentation to '/doc/' as json (overrides other behavior)\n"
     usage_msg += "-h or --help        |  Print this message (overrides other behavior)\n"
@@ -145,6 +146,7 @@ def main():
     arg_out = ""
     arg_moduleout = False
     arg_alias = ""
+    seed = 0
     
     os.makedirs("templates", exist_ok=True)
     os.makedirs("output", exist_ok=True)
@@ -157,7 +159,13 @@ def main():
         elif arg.startswith("-o="):
             arg_out = arg[3:]    
         elif arg.startswith("-a="):
-            arg_alias = arg[3:]    
+            arg_alias = arg[3:]
+        elif arg.startswith("-s="):
+            try:
+                seed = int(arg[3:])
+            except:
+                pass
+        
         elif arg == "--moduleoutput":
             arg_moduleout = True
         elif arg == "--doc":
@@ -243,7 +251,10 @@ def main():
 
     # Create a random number generator
     rng = random.Random()
-    rng.seed(time.time_ns())
+    if seed == 0:
+        rng.seed(time.time_ns())
+    else:
+        rng.seed(seed)
 
     # Apply processing chain
     print("------------------------------------------------------------------o Generation")
