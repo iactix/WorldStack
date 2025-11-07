@@ -1497,10 +1497,13 @@ class NodeEditorApp(tk.Tk):
                                                     filetypes=[("JSON files", "*.json")],
                                                     title="Save Template As")
         else:
-            if as_copy == "":
-                file_path = os.path.join(tmpl_dir, f"{self.current_preset}.json")
-            else:
-                file_path = os.path.join(tmpl_dir, f"{as_copy}.json")
+            #if as_copy == "":
+            #    file_path = os.path.join(tmpl_dir, f"{self.current_preset}.json")
+            #else:
+            #    file_path = os.path.join(tmpl_dir, f"{as_copy}.json")
+            name = self.current_preset if as_copy == "" else as_copy
+            ext = os.path.splitext(name)[1].lower()
+            file_path = os.path.join(tmpl_dir, name if ext in (".json", ".tmp") else name + ".json")
 
         if not file_path:
             return
@@ -1647,12 +1650,12 @@ class NodeEditorApp(tk.Tk):
         self.generation_type = "full"
         if len(dirty_list) > 0:
             self.generation_type = "inc"
-        self.save_template(as_copy="editor_autogen")
+        self.save_template(as_copy="editor_autogen.tmp")
         self.update_idletasks()
         preset_name = self.current_preset
 
         # Ensure unbuffered stdout from the Python generator
-        cmd = [sys.executable, "-u", generator_file, f"-i=editor_autogen", "--moduleoutput", f"-o={preset_name}", f"-a={preset_name}"]
+        cmd = [sys.executable, "-u", generator_file, f"-i=editor_autogen.tmp", "--moduleoutput", f"-o={preset_name}", f"-a={preset_name}"]
         for d in dirty_list:
             cmd.append(f'-d={d}')
         self.log("Running generator...", level="important")

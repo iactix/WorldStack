@@ -252,7 +252,11 @@ def main():
         print(usage_msg)
         sys.exit(1)
 
-    template_file = os.path.join("templates", f"{template_filename}.json")
+    #template_file = os.path.join("templates", f"{template_filename}.json")
+    ext = os.path.splitext(template_filename)[1]
+    if ext not in (".json", ".tmp"):
+        template_filename += ".json"
+    template_file = os.path.join("templates", template_filename)
 
     # Load the preset JSON
     if not os.path.isfile(template_file):
@@ -272,7 +276,7 @@ def main():
     except Exception as e:
         print(f"Unexpected error while reading '{template_file}': {e}", file=sys.stderr)
         sys.exit(1)
-
+    print(f"Generating from template '{template_filename}'")
     print("------------------------------------------------------------------o Initialization")
     # Load available modules from plugins
     instances = load_plugins()
