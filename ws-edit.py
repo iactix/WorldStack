@@ -9,6 +9,7 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 import sys
 import threading
 import textwrap
+import secrets
 
 # Setup
 generator_file = "ws-gen.py"
@@ -222,13 +223,16 @@ class Node:
         self.node_type = node_type
         self.definition = NODE_DEFINITIONS[node_type]
         self.properties = {}
-        self.id = editor.get_next_node_id()
+        self.id = secrets.token_urlsafe(3)
         # Initialize inputs
         for inp in self.definition.get("inputs", []):
             self.properties[inp["name"]] = inp.get("default", None)
         # Initialize outputs
-        for outp in self.definition.get("outputs", []):
-            self.properties[outp["name"]] = f"{node_type}_{self.id}"
+        for i, outp in enumerate(self.definition.get("outputs", [])):
+            if i == 0:
+                self.properties[outp["name"]] = f"{node_type}_{self.id}"
+            else:
+                self.properties[outp["name"]] = f"{node_type}_{self.id}_{i}"
         # Initialize settings
         for setting in self.definition.get("settings", []):
             self.properties[setting["name"]] = setting.get("default")
@@ -841,6 +845,7 @@ class NodeEditorApp(tk.Tk):
 
         self.generation_queue = []
         self.generation_running = False
+        self.generation_type = ""
 
         self.create_menu()
         self.create_toolbar()
@@ -1187,19 +1192,11 @@ class NodeEditorApp(tk.Tk):
         for node in self.nodes:
             node.update()
         self.update_all_connections()
-        # optional: keep or drop this; overlay was already updated immediately
-        # self.draw_overlay()
         self._zoom_update_job = None
 
     def on_escape(self, event):
         self.cancel_pending_connection()
         self.deselect_all()
-
-    # --- Node Management ---
-    def get_next_node_id(self):
-        nid = self._node_id_counter
-        self._node_id_counter += 1
-        return nid
 
     def deselect_all(self):
         for node in self.nodes:
@@ -1647,6 +1644,9 @@ class NodeEditorApp(tk.Tk):
 
     def run_generation(self, dirty_list=[]):
         self.generation_running = True
+        self.generation_type = "full"
+        if len(dirty_list) > 0:
+            self.generation_type = "inc"
         self.save_template(as_copy="editor_autogen")
         self.update_idletasks()
         preset_name = self.current_preset
@@ -1656,7 +1656,7 @@ class NodeEditorApp(tk.Tk):
         for d in dirty_list:
             cmd.append(f'-d={d}')
         self.log("Running generator...", level="important")
-        self.log(cmd)
+        #self.log(cmd)
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -1684,7 +1684,7 @@ class NodeEditorApp(tk.Tk):
                 return
 
             if ret != 0:
-                self.log("Generation failed, look for causes above", level="error")
+                self.log("Generation failed, look for causes above. This is normal for new nodes that need inputs.", level="error")
                 for node in self.nodes:
                     node.draw()
                 self.update_all_connections()
@@ -1692,7 +1692,12 @@ class NodeEditorApp(tk.Tk):
                 return
 
             # success path
-            self.log("Generation complete", level="important")
+            if self.generation_type == "full":
+                self.log("Full generation complete", level="important")
+            elif self.generation_type == "inc":
+                self.log("Incremental generation complete (press 'Regenerate' for full regeneration)", level="important")
+            else:
+                self.log("Generation complete", level="important")
             for node in self.nodes:
                 node.draw()
             self.update_all_connections()
@@ -1703,7 +1708,7 @@ class NodeEditorApp(tk.Tk):
 
     def on_close(self):
         if self.unsaved:
-            if not messagebox.askyesno("Exit", "Discard unsaved changes?"):
+            if not messagebox.askyesno("Exit", "Exit and discard unsaved changes?"):
                 return
         self.destroy()
 
