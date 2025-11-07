@@ -92,6 +92,31 @@ def create_execution_order(modules, configs):
 
     return jobs
 
+def expand_dirty_list(dirty_list, modules, configs):
+    # Build downstream graph without collections imports
+    downstream = {}  # input_name -> set(of downstream output names)
+    for c in configs:
+        m = modules[c["type"]]
+        outs = [c[o] for o in getattr(m, "outputs", []) if o in c]
+        ins  = [c[i] for i in getattr(m, "inputs",  []) if i in c]
+        for inp in ins:
+            s = downstream.setdefault(inp, set())
+            s.update(outs)
+
+    # DFS using a list as a stack
+    dirty = set(dirty_list or [])
+    stack = list(dirty)
+    while stack:
+        cur = stack.pop()
+        for nxt in downstream.get(cur, ()):
+            if nxt not in dirty:
+                dirty.add(nxt)
+                stack.append(nxt)
+
+    # Keep original order, append new ones sorted for determinism
+    initial = list(dirty_list or [])
+    extras = [x for x in sorted(dirty) if x not in initial]
+    return initial + extras
 
 def save_image(destination, data, normalize, norm_min = True, sixteenbit = False):
     try:
@@ -123,6 +148,13 @@ def save_image(destination, data, normalize, norm_min = True, sixteenbit = False
     except:
         raise Exception(f'Failed to save image "{destination}"')
 
+def load_image(source):
+    try:
+        img = Image.open(source)
+        arr = np.array(img, dtype=np.float32)
+        return arr
+    except Exception as e:
+        raise Exception(f'Failed to load image "{source}": {e}')
 
 ############################################################################################################
 ### Main Program
@@ -134,19 +166,21 @@ def main():
     temp_path = ""
     usage_msg = "Usage: python ws-gen.py <Options>\n"
     usage_msg += "Options:\n"
-    usage_msg += "<Template Name>     |  Required, specify name of template in '/templates/' without path or .json. Also works in the form -i=\n"
-    usage_msg += "-o=<Output Name>    |  Optional, specify name of target image in '/output/<Template Name>/' without path or .png. Defaults to timestamped name\n"
-    usage_msg += "-a=<Alias Name>     |  Optional, makes the generator act as if this was the template name while still loading the actually specified template file.\n"
-    usage_msg += "-s=<Seed>           |  Optional, sets the RNG seed (number), useful for repeating results. Default is 0, meaning a random RNG seed.\n"
-    usage_msg += "--moduleoutput      |  Optional, triggers creation of individual module output images in '/output/<Template Name>/module_output'\n"
-    usage_msg += "--doc               |  Writes available module documentation to '/doc/' as json (overrides other behavior)\n"
-    usage_msg += "-h or --help        |  Print this message (overrides other behavior)\n"
+    usage_msg += "<Template Name>       |  Required, specify name of template in '/templates/' without path or .json. Also works in the form -i=\n"
+    usage_msg += "-o=<Output Name>      |  Optional, specify name of target image in '/output/<Template Name>/' without path or .png. Defaults to timestamped name\n"
+    usage_msg += "-a=<Alias Name>       |  Optional, makes the generator act as if this was the template name while still loading the actually specified template file.\n"
+    usage_msg += "-s=<Seed>             |  Optional, sets the RNG seed (number), useful for repeating results. Default is 0, meaning a random RNG seed.\n"
+    usage_msg += "-d=<ModuleOutputName> |  Optional, enables partial generation mode and adds a module output to the dirty list. Relies on previous module output being available.\n"
+    usage_msg += "--moduleoutput        |  Optional, triggers creation of individual module output images in '/output/<Template Name>/module_output'\n"
+    usage_msg += "--doc                 |  Writes available module documentation to '/doc/' as json (overrides other behavior)\n"
+    usage_msg += "-h or --help          |  Print this message (overrides other behavior)\n"
     usage_msg += "Example: python ws-gen.py mytemplate --moduleoutput"
 
     arg_out = ""
     arg_moduleout = False
     arg_alias = ""
     seed = 0
+    dirty_list = []
     
     os.makedirs("templates", exist_ok=True)
     os.makedirs("output", exist_ok=True)
@@ -165,7 +199,8 @@ def main():
                 seed = int(arg[3:])
             except:
                 pass
-        
+        elif arg.startswith("-d="):
+            dirty_list.append(arg[3:])        
         elif arg == "--moduleoutput":
             arg_moduleout = True
         elif arg == "--doc":
@@ -263,13 +298,33 @@ def main():
     except Exception as e:
         print(f'Error creating execution order: {e}', file=sys.stderr)
         sys.exit(1)
+    if len(dirty_list) > 0:
+        try:
+            dirty_list = expand_dirty_list(dirty_list, modules, preset.get("modules", []))
+        except Exception as e:
+            print(f'Error processing dirty module list: {e}', file=sys.stderr)
+            sys.exit(1)
     outputs = {}
+    dirty_set = set(dirty_list or [])
     for cfg in jobs:
         module = None
         try:
-            print(f'--- Running module \'{cfg["type"]}\'...')
             module = modules[cfg["type"]]
-        
+
+            out_keys = list(module.outputs)
+            out_names = [cfg[k] for k in out_keys if k in cfg]
+            must_run = (len(dirty_set) == 0) or any(name in dirty_set for name in out_names)
+            if not must_run:
+                try:
+                    for name in out_names:
+                        path = os.path.join(temp_path, f"raw_{name}.png")  # load raw for downstream fidelity
+                        outputs[name] = load_image(path)
+                        print(f"-> Reusing module output '{name}'")
+                    continue
+                except:
+                    pass
+
+            print(f'--- Running module \'{cfg["type"]}\'...')
             inputs = {}    
             for i in module.inputs:
                 if cfg[i] not in outputs:

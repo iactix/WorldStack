@@ -830,9 +830,6 @@ class NodeEditorApp(tk.Tk):
         self.drag_data = {}
         self._node_id_counter = 1
         self.is_panning = False
-        #self.current_zoom = 1.0
-        #self.camera_offset_x = 0.0
-        #self.camera_offset_y = 0.0
         self.pan_start_x = 0
         self.pan_start_y = 0
         self.pan_start_camera_x = 0
@@ -842,14 +839,13 @@ class NodeEditorApp(tk.Tk):
         self.mouse_y = 0
         self.pending_connection = None
 
-        self.generation_version = 0
-        self.generation_version_target = 0
-        self.generaton_version_inprogress = 0
+        self.generation_queue = []
+        self.generation_running = False
 
         self.create_menu()
         self.create_toolbar()
         self.create_ui()
-        
+
         self.canvas.tag_lower(self.canvas_bg)
         self.grid_size = 400
         self.grid_color = "#e6e6e6"  # darker
@@ -864,8 +860,6 @@ class NodeEditorApp(tk.Tk):
         self.canvas.bind("<Motion>", self.on_mouse_move)
         self.canvas.bind("<MouseWheel>", self.on_mousewheel)
         self.canvas.bind("<ButtonPress-1>", self.on_left_mouse_button)
-        #self.bind("<KeyPress-space>", self.on_space_press)
-        #self.bind("<KeyRelease-space>", self.on_space_release)
         self.bind("<KeyPress-Shift_L>", self.on_shift_press)
         self.bind("<KeyRelease-Shift_L>", self.on_shift_release)
         self.bind("<KeyPress-Shift_R>", self.on_shift_press)
@@ -879,9 +873,15 @@ class NodeEditorApp(tk.Tk):
         self.after(1000, self.tick)  # one-line setup
 
     def tick(self):
-        if self.generaton_version_inprogress == 0:
-            if self.generation_version_target > self.generation_version:
-                self.run_generation()
+        if self.generation_running == False:
+            if len(self.generation_queue) > 0:
+                job = self.generation_queue.pop(0)
+                if job["type"] == "full":
+                    self.run_generation()
+                elif job["type"] == "incremental":
+                    self.run_generation(job["dirty_list"])
+                else:
+                    self.log("Unknown generation type", level="error")
         self.after(1000, self.tick)  # reschedule
 
     def update_title(self):
@@ -897,8 +897,15 @@ class NodeEditorApp(tk.Tk):
         self.unsaved = flag
         self.update_title()
     
-    def set_dirty(self, node=None):
-        self.generation_version_target += 1
+    def set_dirty(self, node:Node=None):
+        job = {}
+        if node == None:
+            job["type"] = "full"
+            self.generation_queue.append(job)
+        else:
+            job["type"] = "incremental"
+            job["dirty_list"] = [node.properties[outp["name"]] for outp in node.definition.get("outputs", [])]
+            self.generation_queue.append(job)
 
     # --- Menus ---
     def create_menu(self):
@@ -1630,24 +1637,6 @@ class NodeEditorApp(tk.Tk):
 
         container.columnconfigure(0, weight=1)
         container.rowconfigure(0, weight=1)
-
-    def run_generation_legacy(self):
-        if self.unsaved:
-            if messagebox.askyesno("Generation", "Save and continue?"):
-                self.save_template()
-            else:
-                return
-        self.update_idletasks()
-        preset_name = self.current_preset
-        cmd = [sys.executable, generator_file, f'-i={preset_name}', "--moduleoutput", f'-o={preset_name}']
-        try:
-            subprocess.run(cmd, check=True)
-        except subprocess.CalledProcessError as e:
-            messagebox.showerror("Generation failed", f"Please check the console output for hints what went wrong.")
-            return
-        for node in self.nodes:
-            node.draw()
-        self.update_all_connections()
     
     def _read_stream_live(self, proc: subprocess.Popen):
         """Read proc stdout live and feed lines into self.log() on the Tk thread."""
@@ -1656,24 +1645,18 @@ class NodeEditorApp(tk.Tk):
             self.after(0, self.log, line.rstrip("\n"))
         proc.stdout.close()
 
-    def run_generation(self):
-        self.generaton_version_inprogress = self.generation_version_target
-        #if self.unsaved:
-        #    if messagebox.askyesno("Generation", "Save and continue?"):
-        #        self.save_template()
-        #    else:
-        #        return
-
+    def run_generation(self, dirty_list=[]):
+        self.generation_running = True
         self.save_template(as_copy="editor_autogen")
-
         self.update_idletasks()
-
         preset_name = self.current_preset
 
         # Ensure unbuffered stdout from the Python generator
-        #cmd = [sys.executable, "-u", generator_file, f"-i={preset_name}", "--moduleoutput", f"-o={preset_name}"]
         cmd = [sys.executable, "-u", generator_file, f"-i=editor_autogen", "--moduleoutput", f"-o={preset_name}", f"-a={preset_name}"]
+        for d in dirty_list:
+            cmd.append(f'-d={d}')
         self.log("Running generator...", level="important")
+        self.log(cmd)
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -1705,8 +1688,7 @@ class NodeEditorApp(tk.Tk):
                 for node in self.nodes:
                     node.draw()
                 self.update_all_connections()
-                self.generation_version = self.generaton_version_inprogress
-                self.generaton_version_inprogress = 0
+                self.generation_running = False
                 return
 
             # success path
@@ -1714,8 +1696,7 @@ class NodeEditorApp(tk.Tk):
             for node in self.nodes:
                 node.draw()
             self.update_all_connections()
-            self.generation_version = self.generaton_version_inprogress
-            self.generaton_version_inprogress = 0
+            self.generation_running = False
 
         # kick off completion checker
         self.after(100, _on_done)
