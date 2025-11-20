@@ -130,8 +130,10 @@ def save_image(destination, data, normalize, norm_min = True, sixteenbit = False
             if min < 0: min = 0
             if min == max:
                 min -= 1
-                min += 1
-            
+                max += 1
+                if max > 255: max = 255
+                if min < 0: min = 0
+
             if sixteenbit:
                 scaled = (data - min) * (65535.0 / (max - min))
                 img = Image.fromarray(np.clip(scaled, 0, 65535).astype(np.uint16), mode="I;16")
