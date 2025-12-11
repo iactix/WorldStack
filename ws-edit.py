@@ -10,6 +10,7 @@ import sys
 import threading
 import textwrap
 import secrets
+import time
 
 # Setup
 generator_file = "ws-gen.py"
@@ -847,14 +848,17 @@ class NodeEditorApp(tk.Tk):
         self.generation_running = False
         self.generation_type = ""
 
+        self.mainview_bg_color = "#bbbbbb"
+        self.mainview_grid_size = 400
+        self.mainview_grid_color = "#999999"
+        self.mainview_origin_color = "#888888"
+
+        self.tick_interval = 3000
+
         self.create_menu()
         self.create_toolbar()
         self.create_ui()
 
-        self.canvas.tag_lower(self.canvas_bg)
-        self.grid_size = 400
-        self.grid_color = "#e6e6e6"  # darker
-        self.origin_color = "#C0C0C0"
         self.init_crap_id = self.canvas.bind("<Configure>", lambda e: self.draw_overlay(True))
 
         self.bind("<Control-s>", lambda event: self.save_template())
@@ -875,7 +879,7 @@ class NodeEditorApp(tk.Tk):
             self.log(l, noprint=True)
 
         self.log("Welcome back, Commander.", level="important")
-        self.after(1000, self.tick)  # one-line setup
+        self.after(self.tick_interval, self.tick)  # one-line setup
 
     def tick(self):
         if self.generation_running == False:
@@ -887,7 +891,7 @@ class NodeEditorApp(tk.Tk):
                     self.run_generation(job["dirty_list"])
                 else:
                     self.log("Unknown generation type", level="error")
-        self.after(1000, self.tick)  # reschedule
+        self.after(self.tick_interval, self.tick)  # reschedule
 
     def update_title(self):
         if self.current_preset:
@@ -903,13 +907,22 @@ class NodeEditorApp(tk.Tk):
         self.update_title()
     
     def set_dirty(self, node:Node=None):
+        # adds jobs in a consolidated way. yes this means there will only be one job queued now, so it's a queue for no reason
         job = {}
         if node == None:
+            self.generation_queue.clear()
             job["type"] = "full"
             self.generation_queue.append(job)
         else:
+            if any(job.get("type") == "full" for job in self.generation_queue):
+                return
             job["type"] = "incremental"
             job["dirty_list"] = [node.properties[outp["name"]] for outp in node.definition.get("outputs", [])]
+            while len(self.generation_queue):
+                j = self.generation_queue.pop()
+                for n in j["dirty_list"]:
+                    if n not in job["dirty_list"]:
+                        job["dirty_list"].append(n)            
             self.generation_queue.append(job)
 
     # --- Menus ---
@@ -974,11 +987,7 @@ class NodeEditorApp(tk.Tk):
         main_pane.add(self.content_pane, stretch="always")
 
         # canvas
-        self.canvas = tk.Canvas(self.content_pane, bg="white", width=800, height=800)
-        self.canvas.config(scrollregion=(-5000, -5000, 5000, 5000))
-        self.canvas_bg = self.canvas.create_rectangle(
-            -5000, -5000, 5000, 5000, fill="white", outline="", state="disabled"
-        )
+        self.canvas = tk.Canvas(self.content_pane, bg=self.mainview_bg_color, width=800, height=800)
         self.content_pane.add(self.canvas, stretch="always")
 
         # console frame at the bottom
@@ -1059,9 +1068,9 @@ class NodeEditorApp(tk.Tk):
         right = cam_x + w / zoom
         bottom = cam_y + h / zoom
 
-        grid = float(getattr(self, "grid_size", 100.0))
-        gc = getattr(self, "grid_color", "#bdbdbd")
-        oc = getattr(self, "origin_color", "#ff3b30")
+        grid = self.mainview_grid_size
+        gc = self.mainview_grid_color
+        oc = self.mainview_origin_color
 
         # verticals
         kx = math.floor(left / grid)
@@ -1088,12 +1097,7 @@ class NodeEditorApp(tk.Tk):
         c.create_line(ox - cross, oy, ox + cross, oy, fill=oc, width=2, tags=("overlay",))
         c.create_line(ox, oy - cross, ox, oy + cross, fill=oc, width=2, tags=("overlay",))
 
-        try:
-            c.tag_raise("overlay", self.canvas_bg)
-        except Exception:
-            pass
-
-    # --- Camera Methods ---
+        c.tag_lower("overlay")
 
     def reset_camera(self):
         w = self.canvas.winfo_width()
@@ -1170,7 +1174,7 @@ class NodeEditorApp(tk.Tk):
                 new_zoom = old_zoom + step
             elif factor < 1:
                 new_zoom = old_zoom - step
-        if new_zoom < 0.2 or new_zoom > 2.0:
+        if new_zoom < 0.2 or new_zoom > 4.0:
             return
 
         mx, my = event.x, event.y
@@ -1476,7 +1480,6 @@ class NodeEditorApp(tk.Tk):
         
         if not positions_present:
             self.auto_layout()
-        self.canvas.configure(scrollregion=self.canvas.bbox("all") or (-5000, -5000, 5000, 5000))
         self.canvas.update_idletasks()
         self.draw_overlay()
         for node in self.nodes:
@@ -1524,7 +1527,7 @@ class NodeEditorApp(tk.Tk):
 
     def clear_canvas(self):
         self.canvas.delete("all")
-        self.canvas_bg = self.canvas.create_rectangle(-5000, -5000, 5000, 5000, fill="white", outline="", state="disabled")
+        #self.canvas_bg = self.canvas.create_rectangle(-5000, -5000, 5000, 5000, fill="white", outline="", state="disabled")
 
     def auto_layout(self):
         in_degree = {node.id: 0 for node in self.nodes}
@@ -1676,7 +1679,6 @@ class NodeEditorApp(tk.Tk):
 
         # start reader in background
         t = threading.Thread(target=self._read_stream_live, args=(proc,), daemon=True)
-        t = threading.Thread(target=self._read_stream_live, args=(proc,), daemon=True)
         t.start()
 
         def _on_done():
@@ -1749,8 +1751,6 @@ def run_generator_doc(okay_to_fail = True):
     return ""
 
 if __name__ == "__main__":
-    import time
-
     # Load splash image
     img = Image.open("images/worldstack.png")
     splash = tk.Tk()
